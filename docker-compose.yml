@@ -1,45 +1,73 @@
+
 services:
   apache:
-    image: php:8.0-apache
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: php-apache
+    restart: always
     ports:
-      - "3000:80"
+      - "${PORT_APACHE:-3000}:80"
+    environment:
+      APP_NAME: ${APP_NAME:-ReparaYaApp}
+      APP_ENV: ${APP_ENV:-local}
+      GROUP_CODE: ${GROUP_CODE:-GRUPO_XX}
+      STUDENT_NAME: ${STUDENT_NAME:-Estudiante}
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-reparayaapp}
+      MYSQL_USER: ${MYSQL_USER:-user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1234user}
     volumes:
+      - web-data:/var/www/html
       - ./src:/var/www/html
     networks:
       - entorno-web
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+
   mysql:
     image: mysql:8.0
     container_name: mysql
+    restart: always
     ports:
-      - "3306:3306"
+      - "${PORT_MYSQL:-3306}:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: reparayaapp
-      MYSQL_USER: user 
-      MYSQL_PASSWORD: 1234user
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-reparayaapp}
+      MYSQL_USER: ${MYSQL_USER:-user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1234user}
     networks:
-      - entorno-web   
+      - entorno-web
     volumes:
       - mysql-data:/var/lib/mysql
-  
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   app:
-    depends_on:
-      - mysql
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
     restart: always
-    ports:  
-      - "8080:80"
+    ports:
+      - "${PORT_PMA:-8080}:80"
     environment:
       PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     networks:
       - entorno-web
-  
+    depends_on:
+      - mysql
+
 networks:
   entorno-web:
+    driver: bridge
 
 volumes:
   mysql-data:
+    driver: local
+  web-data:
+    driver: local
