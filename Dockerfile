@@ -1,7 +1,7 @@
-FROM php:8.3-apache
+FROM php:8.3.12-apache-bookworm
 
 # Instalar dependencias necesarias para la laravel y extensiones de PHP
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
