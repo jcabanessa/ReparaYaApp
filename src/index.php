@@ -6,11 +6,12 @@ $appName     = getenv('APP_NAME') ?: 'ReparaYaApp';
 $groupCode   = getenv('GROUP_CODE') ?: 'SIN-GRUPO';
 $studentName = getenv('STUDENT_NAME') ?: 'Estudiante';
 $appEnv      = getenv('APP_ENV') ?: 'local';
+$phpVersion  = getenv('PHP_VERSION') ?: phpversion();
 
 $dbHost     = getenv('MYSQL_HOST') ?: 'mysql';
 $dbName     = getenv('MYSQL_DATABASE') ?: 'reparayaapp';
 $dbUser     = getenv('MYSQL_USER') ?: 'user';
-$dbPassword = getenv('MYSQL_PASSWORD') ?: '1234user';
+$dbPassword = getenv('MYSQL_PASSWORD') ?: 'secret_user_pass';
 
 $dbConnected = false;
 $errorMessage = '';
@@ -56,17 +57,19 @@ try {
 </head>
 <body>
     <h1><?php echo htmlspecialchars($appName); ?></h1>
-    <p>Grupo: <?php echo htmlspecialchars($groupCode); ?></p>
-    <p>Estudiante: <?php echo htmlspecialchars($studentName); ?></p>
-    <p>Entorno: <?php echo htmlspecialchars($appEnv); ?></p>
+    <p><b>Grupo:</b> <?php echo htmlspecialchars($groupCode); ?></p>
+    <p><b>Estudiante:</b> <?php echo htmlspecialchars($studentName); ?></p>
+    <p><b>Entorno:</b> <?php echo htmlspecialchars($appEnv); ?></p>
+    <p><b>Versión de PHP:</b> <?php echo htmlspecialchars($phpVersion); ?></p>
+    <p><b>Fecha y hora:</b> <?php echo date("Y-m-d H:i:s"); ?></p>
 
     <div class="status">
         <?php if ($dbConnected): ?>
-            <p>Conexión a la base de datos: <strong>Exitosa</strong></p>
-            <p>Número de visitas registradas en la base de datos: <strong><?php echo $visitasCount; ?></strong></p>
+            <p><b>Conexión a la base de datos:</b> <strong style="color: green;">Exitosa</strong></p>
+            <p><b>Número de visitas registradas en la base de datos:</b> <strong style="color: blue;"><?php echo $visitasCount; ?></strong></p>
         <?php else: ?>
-            <p class="error">Conexión a la base de datos: <strong>Fallida</strong></p>
-            <p class="error">Error: <?php echo htmlspecialchars($errorMessage); ?></p>
+            <p class="error"><b>Conexión a la base de datos:</b> <strong style="color: red;">Fallida</strong></p>
+            <p class="error"><b>Error:</b> <?php echo htmlspecialchars($errorMessage); ?></p>
         <?php endif; ?>
     </div>
 </body>

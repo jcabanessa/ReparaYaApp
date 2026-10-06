@@ -36,7 +36,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-reparayaapp}
       MYSQL_USER: ${MYSQL_USER:-user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1234user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-user_pass}
     networks:
       - entorno-web
     volumes:
@@ -55,8 +55,7 @@ services:
       - "${PORT_PMA:-8080}:80"
     environment:
       PMA_HOST: mysql
-      PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+
     networks:
       - entorno-web
     depends_on:
