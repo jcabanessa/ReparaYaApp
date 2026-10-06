@@ -16,7 +16,7 @@ services:
       MYSQL_HOST: mysql
       MYSQL_DATABASE: ${MYSQL_DATABASE:-reparayaapp}
       MYSQL_USER: ${MYSQL_USER:-user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1234user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mysql_pass}
     volumes:
       - web-data:/var/www/html
       - ./src:/var/www/html
