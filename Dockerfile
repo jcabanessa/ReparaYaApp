@@ -23,6 +23,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
         bcmath \
         opcache
 
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Habilitar mod_rewrite para Apache
 RUN a2enmod rewrite
 
