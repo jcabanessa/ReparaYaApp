@@ -1,13 +1,23 @@
 
+# 1. SERVICIOS (Los "trabajadores" de nuestra aplicación)
 services:
+# --- TRABAJADOR 1: EL SERVIDOR WEB (Apache + PHP) ---
   apache:
+  # 'build' le dice a Docker que no descargue una imagen prehecha, 
+    # sino que lea nuestro archivo 'Dockerfile' local para construir el servidor a medida.
     build:
       context: .
       dockerfile: Dockerfile
     container_name: php-apache
-    restart: always
+    restart: always # Si el contenedor falla o reinicias el PC, se encenderá automáticamente.
+
+    # 'ports' conecta tu ordenador físico con el contenedor. 
+    # La sintaxis ${VARIABLE:-VALOR} busca en el archivo .env. Si no lo encuentra, usa el 3000.
+    # Significa: "Lo que el contenedor sirve en el puerto 80, muéstramelo en el puerto 3000 de mi navegador".
     ports:
       - "${PORT_APACHE:-3000}:80"
+
+      # 'environment' inyecta variables dentro de PHP para que getenv() pueda leerlas.
     environment:
       APP_NAME: ${APP_NAME:-ReparaYaApp}
       APP_ENV: ${APP_ENV:-local}
@@ -17,21 +27,33 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-reparayaapp}
       MYSQL_USER: ${MYSQL_USER:-user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1234user}
+   
+   # 'volumes' son carpetas compartidas. 
+    # ./src:/var/www/html significa que todo lo que programes en tu carpeta local 'src'
+    # se reflejará al instante dentro de la carpeta del servidor sin tener que reiniciar nada.
     volumes:
       - web-data:/var/www/html
       - ./src:/var/www/html
+    
+    # Conecta este contenedor a nuestra red privada.
     networks:
       - entorno-web
+    
+    # 'depends_on' obliga a Apache a esperar. No arrancará hasta que el chequeo 
+    # de salud (healthcheck) de MySQL diga que la base de datos está 100% lista.
     depends_on:
       mysql:
         condition: service_healthy
 
+# --- TRABAJADOR 2: LA BASE DE DATOS (MySQL) ---
   mysql:
-    image: mysql:8.0
+    image: mysql:8.0 # Aquí no construimos nada, descargamos la versión oficial de MySQL 8.0.
     container_name: mysql
     restart: always
     ports:
-      - "${PORT_MYSQL:-3306}:3306"
+      - "${PORT_MYSQL:-3307}:3306"
+
+      # Le pasamos a MySQL las contraseñas para que configure la base de datos al encenderse.
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-reparayaapp}
@@ -39,32 +61,47 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-user_pass}
     networks:
       - entorno-web
+
+    # PERSISTENCIA.
+    # Guarda los datos reales de MySQL en un volumen llamado 'mysql-data'.
+    # Si borras el contenedor, tus tablas y usuarios no se pierden.
     volumes:
       - mysql-data:/var/lib/mysql
+    
+    # 'healthcheck' hace una prueba (un "ping") cada 5 segundos para comprobar si 
+    # la base de datos ya ha terminado de arrancar y está lista para recibir conexiones.
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+# --- TRABAJADOR 3: EL GESTOR VISUAL (phpMyAdmin) ---
   app:
     image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
     restart: always
     ports:
-      - "${PORT_PMA:-8080}:80"
+      - "${PORT_PMA:-8080}:80" # Podrás entrar a verlo en localhost:8080
     environment:
-      PMA_HOST: mysql
+      PMA_HOST: mysql # Le dice a phpMyAdmin que se conecte al servicio llamado 'mysql'
 
     networks:
       - entorno-web
     depends_on:
       - mysql
 
+
+# 2. REDES (El cableado interno)
+# Crea una red privada (bridge) para que los contenedores puedan verse y hablar entre ellos 
+# usando sus nombres (ej: Apache puede llamar a "mysql") sin necesidad de conocer sus IPs reales.
 networks:
   entorno-web:
     driver: bridge
 
+# 3. VOLÚMENES (Los discos duros)
+# Declara los espacios de almacenamiento persistente que el sistema operativo 
+# debe guardar físicamente en tu ordenador.
 volumes:
   mysql-data:
     driver: local
