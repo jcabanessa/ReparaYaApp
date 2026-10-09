@@ -8,6 +8,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     libzip-dev \
     libonig-dev \
     libxml2-dev \
+    zip \
     unzip \
     git \
     curl \
