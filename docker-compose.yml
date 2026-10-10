@@ -30,6 +30,7 @@ services:
     image: mysql:8.0
     container_name: mysql
     restart: always
+    command: --default-authentication-plugin=mysql_native_password
     ports:
       - "${PORT_MYSQL:-3306}:3306"
     environment:
@@ -60,6 +61,24 @@ services:
       - entorno-web
     depends_on:
       - mysql
+  
+  service-wordpress:
+    image: wordpress:latest
+    container_name: wordpress
+    restart: always
+    ports:
+      - "${PORT_WORDPRESS:-80}:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_NAME: ${MYSQL_WORDPRESS_DATABASE:-wordpress}
+      WORDPRESS_DB_USER: ${MYSQL_USER:-user}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD:-user_pass}
+    volumes:
+      - ./src/wordpress:/var/www/html
+    networks:
+      - entorno-web
+    depends_on:
+      - mysql
 
 networks:
   entorno-web:
@@ -70,3 +89,8 @@ volumes:
     driver: local
   web-data:
     driver: local
+  wordpress-data:
+    driver: local
+
+
+  
