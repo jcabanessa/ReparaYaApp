@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+Route::get('/web', function () {
     return response()->json([
         'proyecto' => env('APP_NAME'),
         'grupo' => env('GROUP_CODE'),
