@@ -165,6 +165,35 @@ class Incidencia {
         return $stmt->fetch();
     }
 
+    /**
+     * Obtiene todas las incidencias de un cliente específico con su especialidad
+     */
+    public function obtenerPorCliente($cliente_id) {
+        $sql = "SELECT i.*, e.nombre_especialidad 
+                FROM incidencias i 
+                JOIN especialidades e ON i.especialidad_id = e.id 
+                WHERE i.cliente_id = :cliente_id 
+                ORDER BY i.fecha_servicio DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':cliente_id' => $cliente_id]);
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Obtiene todas las incidencias asignadas a un técnico específico
+     */
+    public function obtenerPorTecnico($tecnico_id) {
+        $sql = "SELECT i.*, e.nombre_especialidad, u.nombre as cliente_nombre, u.telefono as cliente_telefono 
+                FROM incidencias i 
+                JOIN especialidades e ON i.especialidad_id = e.id 
+                JOIN usuarios u ON i.cliente_id = u.id 
+                WHERE i.tecnico_id = :tecnico_id 
+                ORDER BY i.fecha_servicio ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':tecnico_id' => $tecnico_id]);
+        return $stmt->fetchAll();
+    }
+
     public function obtenerHistorial($incidencia_id) {
         $sql = "SELECT h.*, u.nombre as usuario_nombre 
                 FROM historial_estados h 
@@ -175,4 +204,69 @@ class Incidencia {
         $stmt->execute([':incidencia_id' => $incidencia_id]);
         return $stmt->fetchAll();
     }
+
+    /**
+ * Obtiene todas las incidencias del sistema (opcionalmente filtradas por estado)
+ */
+public function obtenerTodas($estadoFiltro = null) {
+    $sql = "SELECT i.*, e.nombre_especialidad, u.nombre as cliente_nombre, t.id as tecnico_id_asociado,
+                    (SELECT nombre FROM usuarios WHERE id = t.usuario_id) as tecnico_nombre
+            FROM incidencias i 
+            JOIN especialidades e ON i.especialidad_id = e.id 
+            JOIN usuarios u ON i.cliente_id = u.id 
+            LEFT JOIN tecnicos t ON i.tecnico_id = t.id";
+    
+    if ($estadoFiltro) {
+        $sql .= " WHERE i.estado = :estado";
+    }
+    
+    $sql .= " ORDER BY i.fecha_servicio DESC";
+    
+    $stmt = $this->pdo->prepare($sql);
+    if ($estadoFiltro) {
+        $stmt->execute([':estado' => $estadoFiltro]);
+    } else {
+        $stmt->execute();
+    }
+    return $stmt->fetchAll();
 }
+
+/**
+ * Asigna un técnico a una incidencia y cambia automáticamente su estado a 'Asignada'
+ */
+public function asignarTecnico($incidencia_id, $tecnico_id, $usuario_id) {
+    $incidencia = $this->obtenerPorId($incidencia_id);
+    if (!$incidencia) {
+        throw new Exception("La incidencia no existe.");
+    }
+
+    $estadoActual = $incidencia['estado'];
+
+    // Solo se puede asignar si está Pendiente (o reasignar si está Asignada)
+    if (!in_array($estadoActual, ['Pendiente', 'Asignada'])) {
+        throw new Exception("Solo se pueden asignar técnicos a incidencias en estado Pendiente o Asignada.");
+    }
+
+    try {
+        $this->pdo->beginTransaction();
+
+        // Actualizar técnico y cambiar estado a 'Asignada'
+        $sql = "UPDATE incidencias SET tecnico_id = :tecnico_id, estado = 'Asignada' WHERE id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':tecnico_id' => $tecnico_id,
+            ':id'         => $incidencia_id
+        ]);
+
+        // Registrar en el historial
+        $this->registrarHistorial($incidencia_id, $estadoActual, 'Asignada', $usuario_id, "Asignación de técnico realizada por administrador.");
+
+        $this->pdo->commit();
+        return true;
+    } catch (Exception $e) {
+        $this->pdo->rollBack();
+        throw $e;
+    }
+}
+}
+
