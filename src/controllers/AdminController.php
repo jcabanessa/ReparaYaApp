@@ -57,3 +57,36 @@ if ($action === 'cancelar' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 }
+
+// Procesar creación manual de avisos por parte del Admin
+if ($action === 'crear_manual' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $cliente_id      = $_POST['cliente_id'] ?? '';
+    $especialidad_id = $_POST['especialidad_id'] ?? '';
+    $descripcion     = trim($_POST['descripcion'] ?? '');
+    $direccion       = trim($_POST['direccion'] ?? '');
+    $fecha_servicio  = $_POST['fecha_servicio'] ?? '';
+    $tipo_urgencia   = $_POST['tipo_urgencia'] ?? 'Estándar';
+
+    try {
+        if (empty($cliente_id) || empty($especialidad_id)) {
+            throw new Exception("Debe seleccionar un cliente y una especialidad válida.");
+        }
+
+        $localizador = $incidenciaModel->crear(
+            $cliente_id, 
+            $especialidad_id, 
+            $descripcion, 
+            $direccion, 
+            $fecha_servicio, 
+            $tipo_urgencia
+        );
+
+        header('Location: ../views/admin/gestion_avisos.php?success=creado&loc=' . $localizador);
+        exit();
+
+    } catch (Exception $e) {
+        $errorMensaje = urlencode($e->getMessage());
+        header('Location: ../views/admin/crear_aviso.php?error=' . $errorMensaje);
+        exit();
+    }
+}

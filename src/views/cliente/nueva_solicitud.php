@@ -8,6 +8,8 @@
 </head>
 <body>
     <div class="container">
+        <!-- Inclusión de la cabecera dinámica -->
+        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Crear Nueva Solicitud de Asistencia</h1>
         <p>Cliente: <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong></p>
 
@@ -17,7 +19,7 @@
             </div>
         <?php endif; ?>
 
-        <form action="../../controllers/ClientController.php?action=crear" method="POST">
+        <form action="../../controllers/ClienteController.php?action=crear" method="POST">
             <label for="especialidad_id">Tipo de Servicio (Especialidad):</label>
             <select name="especialidad_id" id="especialidad_id" required>
                 <option value="">-- Seleccione una especialidad --</option>

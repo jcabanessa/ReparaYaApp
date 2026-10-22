@@ -32,6 +32,8 @@ $success = $_GET['success'] ?? null;
 </head>
 <body>
     <div class="container container-wide">
+        <!-- Inclusión de la cabecera dinámica -->
+        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Panel de Administración - Gestión de Avisos</h1>
         <p>Administrador: <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong></p>
 

@@ -33,6 +33,8 @@ $success = $_GET['success'] ?? null;
 </head>
 <body>
     <div class="container container-wide">
+        <!-- Inclusión de la cabecera dinámica -->
+        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Agenda de Incidencias Asignadas</h1>
         <p>Técnico: <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong></p>
 

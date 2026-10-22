@@ -1,76 +1,59 @@
 <?php
-date_default_timezone_set("Europe/Madrid");
-
-//Lectura de variables de entorno
-$appName     = getenv('APP_NAME') ?: 'ReparaYaApp';
-$groupCode   = getenv('GROUP_CODE') ?: 'SIN-GRUPO';
-$studentName = getenv('STUDENT_NAME') ?: 'Estudiante';
-$appEnv      = getenv('APP_ENV') ?: 'local';
-$phpVersion  = getenv('PHP_VERSION') ?: phpversion();
-
-$dbHost     = getenv('MYSQL_HOST') ?: 'mysql';
-$dbName     = getenv('MYSQL_DATABASE') ?: 'reparayaapp';
-$dbUser     = getenv('MYSQL_USER') ?: 'user';
-$dbPassword = getenv('MYSQL_PASSWORD') ?: 'secret_user_pass';
-
-$dbConnected = false;
-$errorMessage = '';
-$visitasCount = 0;
-
-try {
-    $dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
-    $pdo = new PDO($dsn, $dbUser, $dbPassword, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-
-    $dbConnected = true;
-
-    // Tabla para comprobar la persistencia en el volumen mysql-data
-    $pdo->exec("CREATE TABLE IF NOT EXISTS comprobacion_persistencia (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        fecha DATETIME NOT NULL
-    )");
-
-    $stmt = $pdo->prepare("INSERT INTO comprobacion_persistencia (fecha) VALUES (NOW())");
-    $stmt->execute();
-
-    $stmtCount = $pdo->query("SELECT COUNT(*) AS total FROM comprobacion_persistencia");
-    $visitasCount = $stmtCount->fetch()['total'];
-
-} catch (PDOException $e) {
-    $dbConnected  = false;
-    $errorMessage = $e->getMessage();
+/**
+ * index.php (Raíz)
+ * Sitio web de contenido estático para la presentación de ReparaYaApp.
+ */
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($appName); ?></title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .status { margin-top: 20px; }
-        .error { color: red; }
-    </style>
+    <title>ReparaYaApp - Gestión Integral de Incidencias</title>
+    <link rel="stylesheet" href="public/css/style.css">
 </head>
 <body>
-    <h1><?php echo htmlspecialchars($appName); ?></h1>
-    <p><b>Grupo:</b> <?php echo htmlspecialchars($groupCode); ?></p>
-    <p><b>Estudiante:</b> <?php echo htmlspecialchars($studentName); ?></p>
-    <p><b>Entorno:</b> <?php echo htmlspecialchars($appEnv); ?></p>
-    <p><b>Versión de PHP:</b> <?php echo htmlspecialchars($phpVersion); ?></p>
-    <p><b>Fecha y hora:</b> <?php echo date("Y-m-d H:i:s"); ?></p>
+    <div class="container container-wide">
+        <!-- Inclusión de la cabecera dinámica -->
+        <?php include __DIR__ . '/../layouts/header.php'; ?>
+        <h1>Bienvenido a ReparaYaApp</h1>
+        <p class="text-muted">Plataforma profesional para la gestión y seguimiento de incidencias y servicios técnicos.</p>
 
-    <div class="status">
-        <?php if ($dbConnected): ?>
-            <p><b>Conexión a la base de datos:</b> <strong style="color: green;">Exitosa</strong></p>
-            <p><b>Número de visitas registradas en la base de datos:</b> <strong style="color: blue;"><?php echo $visitasCount; ?></strong></p>
-        <?php else: ?>
-            <p class="error"><b>Conexión a la base de datos:</b> <strong style="color: red;">Fallida</strong></p>
-            <p class="error"><b>Error:</b> <?php echo htmlspecialchars($errorMessage); ?></p>
-        <?php endif; ?>
+        <div class="mb-20" style="margin-top: 20px;">
+            <?php if (isset($_SESSION['usuario_id'])): ?>
+                <a href="views/perfil.php" class="btn btn-success">Mi Perfil</a>
+                <a href="controllers/AuthController.php?action=logout" class="float-right">Cerrar Sesión</a>
+            <?php else: ?>
+                <a href="views/auth/login.php" class="btn">Iniciar Sesión</a>
+                <a href="views/auth/registro.php" class="btn btn-success" style="margin-left: 10px;">Registrarse</a>
+            <?php endif; ?>
+        </div>
+
+        <div class="details-box" style="margin-top: 30px;">
+            <h3>¿Qué es ReparaYaApp?</h3>
+            <p>ReparaYaApp es una solución web desarrollada en PHP nativo bajo arquitectura MVC diseñada para automatizar la solicitud, asignación y resolución de incidencias en diversos servicios técnicos (fontanería, electricidad, climatización, etc.).</p>
+        </div>
+
+        <h3>Características Principales</h3>
+        <ul>
+            <li><strong>Gestión de Roles Dinámica:</strong> Paneles específicos y seguros para Administradores, Técnicos y Clientes Particulares.</li>
+            <li><strong>Solicitudes y Precios Base:</strong> Creación de avisos estándar (con validación estricta de 48 horas de antelación) y urgentes.</li>
+            <li><strong>Asignación Automática y Control de Estados:</strong> Ciclo completo de vida de la incidencia (Pendiente $\rightarrow$ Asignada $\rightarrow$ En curso $\rightarrow$ Finalizada / Cancelada).</li>
+            <li><strong>Historial de Cambios:</strong> Registro cronológico detallado de cada modificación de estado en el servidor.</li>
+        </ul>
+
+        <h3>¿Cómo funciona?</h3>
+        <ol>
+            <li><strong>Regístrate</strong> como cliente particular de forma rápida y sencilla con tu correo electrónico.</li>
+            <li><strong>Crea una solicitud</strong> indicando la especialidad, la fecha deseada y la descripción de la avería.</li>
+            <li><strong>Realiza un seguimiento</strong> en tiempo real del estado de tu aviso y consulta su historial detallado.</li>
+        </ol>
+
+        <div class="text-center" style="margin-top: 40px; border-top: 1px solid #dee2e6; padding-top: 20px;">
+            <p class="text-muted">Desarrollado en PHP nativo con seguridad PDO y control de sesiones por roles.</p>
+        </div>
     </div>
 </body>
 </html>

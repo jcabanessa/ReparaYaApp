@@ -32,4 +32,29 @@ class Usuario {
         $stmt->execute([':email' => $email]);
         return $stmt->fetch();
     }
+
+    /**
+     * Actualiza el perfil de un usuario (nombre, email y opcionalmente password)
+     */
+    public function actualizarPerfil($id, $nombre, $email, $password = null) {
+        if (!empty($password)) {
+            $hashPassword = password_hash($password, PASSWORD_DEFAULT);
+            $sql = "UPDATE usuarios SET nombre = :nombre, email = :email, password = :password WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([
+                ':nombre'   => $nombre,
+                ':email'    => $email,
+                ':password' => $hashPassword,
+                ':id'       => $id
+            ]);
+        } else {
+            $sql = "UPDATE usuarios SET nombre = :nombre, email = :email WHERE id = :id";
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute([
+                ':nombre' => $nombre,
+                ':email'  => $email,
+                ':id'     => $id
+            ]);
+        }
+    }
 }

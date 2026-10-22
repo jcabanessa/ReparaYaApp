@@ -1,69 +1,90 @@
 <?php
-// controllers/AuthController.php
+/**
+ * controllers/AuthController.php
+ * Gestiona el inicio de sesión, registro y cierre de sesión de forma segura.
+ */
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../models/Usuario.php';
+require_once __DIR__ . '/../config/auth.php';
+
+$action = $_GET['action'] ?? '';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$usuarioModel = new Usuario($pdo);
-$action = $_GET['action'] ?? '';
-
 // Procesar Login
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email    = trim($_POST['email'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
 
-    $usuario = $usuarioModel->buscarPorEmail($email);
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = :email");
+        $stmt->execute([':email' => $email]);
+        $usuario = $stmt->fetch();
 
-    if ($usuario && password_verify($password, $usuario['password'])) {
-        // Credenciales correctas: Iniciar sesión
-        $_SESSION['usuario_id'] = $usuario['id'];
-        $_SESSION['nombre']     = $usuario['nombre'];
-        $_SESSION['email']      = $usuario['email'];
-        $_SESSION['rol']        = $usuario['rol'];
+        if ($usuario && password_verify($password, $usuario['password'])) {
+            // Registrar datos en la sesión
+            $_SESSION['usuario_id'] = $usuario['id'];
+            $_SESSION['nombre']     = $usuario['nombre'];
+            $_SESSION['email']      = $usuario['email'];
+            $_SESSION['rol']        = $usuario['rol'];
 
-        // Redireccionar según el rol
-        switch ($usuario['rol']) {
-            case 'admin':
-                header('Location: ../views/admin/dashboard.php');
-                break;
-            case 'tecnico':
+            // Redirigir según el rol del usuario
+            if ($usuario['rol'] === 'admin') {
+                header('Location: ../views/admin/gestion_avisos.php');
+            } elseif ($usuario['rol'] === 'tecnico') {
                 header('Location: ../views/tecnico/agenda.php');
-                break;
-            case 'particular':
-            default:
+            } else {
                 header('Location: ../views/cliente/mis_avisos.php');
-                break;
+            }
+            exit();
+        } else {
+            throw new Exception("Credenciales incorrectas.");
         }
-        exit();
-    } else {
-        header('Location: ../views/login.php?error=invalid_credentials');
+    } catch (Exception $e) {
+        header('Location: ../views/auth/login.php?error=1');
         exit();
     }
 }
 
-// Procesar Registro
+// Procesar Registro de nuevo cliente particular
 if ($action === 'registro' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre   = trim($_POST['nombre'] ?? '');
     $email    = trim($_POST['email'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $telefono = trim($_POST['telefono'] ?? '');
 
-    if (!empty($nombre) && !empty($email) && !empty($password)) {
-        if ($usuarioModel->registrar($nombre, $email, $password, $telefono, 'particular')) {
-            header('Location: ../views/login.php?success=registrado');
-            exit();
+    try {
+        if (empty($nombre) || empty($email) || empty($password)) {
+            throw new Exception("Todos los campos obligatorios deben completarse.");
         }
+
+        $hashPassword = password_hash($password, PASSWORD_DEFAULT);
+        $rol = 'particular'; // Rol por defecto para registros públicos
+
+        $sql = "INSERT INTO usuarios (nombre, email, password, telefono, rol) VALUES (:nombre, :email, :password, :telefono, :rol)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':nombre'   => $nombre,
+            ':email'    => $email,
+            ':password' => $hashPassword,
+            ':telefono' => $telefono,
+            ':rol'      => $rol
+        ]);
+
+        header('Location: ../views/auth/login.php?msg=registrado');
+        exit();
+
+    } catch (Exception $e) {
+        header('Location: ../views/auth/registro.php?error=1');
+        exit();
     }
-    header('Location: ../views/registro.php?error=fallo_registro');
-    exit();
 }
 
-// Logout
+// Procesar Logout
 if ($action === 'logout') {
+    session_unset();
     session_destroy();
-    header('Location: ../views/login.php?msg=sesion_cerrada');
+    header('Location: ../views/auth/login.php?msg=sesion_cerrada');
     exit();
 }

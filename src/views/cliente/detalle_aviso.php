@@ -44,6 +44,8 @@ if (in_array($incidencia['estado'], ['Pendiente', 'Asignada'])) {
 </head>
 <body>
     <div class="container container-medium">
+        <!-- Inclusión de la cabecera dinámica -->
+        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Detalle del Aviso: <?= htmlspecialchars($incidencia['localizador']) ?></h1>
 
         <?php if ($error): ?>

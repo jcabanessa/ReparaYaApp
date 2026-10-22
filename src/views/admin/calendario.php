@@ -25,6 +25,8 @@ $incidencias = $incidenciaModel->obtenerTodas();
 </head>
 <body>
     <div class="container container-wide">
+        <!-- Inclusión de la cabecera dinámica -->
+        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Calendario y Agenda de Intervenciones</h1>
         <p>Administrador: <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong></p>
 

@@ -18,10 +18,22 @@ function checkAuth() {
  # Restringe el acceso a uno o varios roles específicos.
 $rolesPermitidos = ['admin', 'tecnico', 'particular'];
 
+/**
+ * Verifica que el usuario autenticado pertenezca a uno de los roles permitidos.
+ */
 function checkRole(array $rolesPermitidos) {
     checkAuth();
-    if (!in_array($_SESSION['rol'], $rolesPermitidos)) {
-        header('Location: index.php?error=acceso_denegado');
+    
+    $rolActual = $_SESSION['rol'] ?? '';
+    if (!in_array($rolActual, $rolesPermitidos)) {
+        // Redirigir al panel correspondiente según su rol en caso de acceso no autorizado
+        if ($rolActual === 'admin') {
+            header('Location: /reparayaapp/views/admin/gestion_avisos.php?error=no_autorizado');
+        } elseif ($rolActual === 'tecnico') {
+            header('Location: /reparayaapp/views/tecnico/agenda.php?error=no_autorizado');
+        } else {
+            header('Location: /reparayaapp/views/cliente/mis_avisos.php?error=no_autorizado');
+        }
         exit();
     }
 }

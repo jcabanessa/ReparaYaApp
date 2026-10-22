@@ -21,6 +21,8 @@ $loc = $_GET['loc'] ?? '';
 </head>
 <body>
     <div class="container container-wide">
+        <!-- Inclusión de la cabecera dinámica -->
+        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Mis Solicitudes de Asistencia</h1>
         <p>Cliente: <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong></p>
 
