@@ -16,8 +16,6 @@ if (session_status() === PHP_SESSION_NONE) {
 </head>
 <body>
     <div class="container container-wide">
-        <!-- Inclusión de la cabecera dinámica -->
-        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Bienvenido a ReparaYaApp</h1>
         <p class="text-muted">Plataforma profesional para la gestión y seguimiento de incidencias y servicios técnicos.</p>
 

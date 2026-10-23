@@ -1,3 +1,19 @@
+<?php
+/**
+ * views/cliente/nueva_solicitud.php
+ * Formulario para que el cliente solicite una nueva asistencia técnica.
+ */
+require_once __DIR__ . '/../../config/auth.php';
+require_once __DIR__ . '/../../config/db.php';
+
+// Proteger vista para clientes (esto ya inicializa la sesión de forma segura)
+checkRole(['particular']);
+
+$stmt = $pdo->query("SELECT * FROM especialidades");
+$especialidades = $stmt->fetchAll();
+
+$error = $_GET['error'] ?? null;
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

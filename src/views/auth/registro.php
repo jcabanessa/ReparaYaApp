@@ -17,8 +17,6 @@ $error = $_GET['error'] ?? null;
 </head>
 <body>
     <div class="container">
-        <!-- Inclusión de la cabecera dinámica -->
-        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Registro de Nuevo Cliente</h1>
         <p class="text-muted">Crea tu cuenta para solicitar asistencias técnicas.</p>
 

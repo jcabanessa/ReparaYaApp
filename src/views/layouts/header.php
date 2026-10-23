@@ -3,10 +3,6 @@
  * views/layouts/header.php
  * Cabecera y menú de navegación dinámico según el rol.
  */
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 $nombreUsuario = $_SESSION['nombre'] ?? 'Usuario';
 $rolUsuario    = $_SESSION['rol'] ?? 'particular';
 ?>
