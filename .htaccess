@@ -1,1 +1,14 @@
-<IfModule 
+# ==========================================
+# REPARAYAAPP - CONFIGURACIÓN .HTACCESS
+# ==========================================
+
+# 1. Evitar que el servidor muestre el listado de archivos de las carpetas
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 2. Bloquear el acceso directo vía URL a las carpetas de sistema sensibles
+    # Devuelve un error 403 Forbidden si alguien intenta acceder a /config, /controllers o /models
+    RewriteRule ^(config|controllers|models)(/.*)?$ - [F,L]
+</IfModule>
