@@ -13,21 +13,21 @@ $rolUsuario    = $_SESSION['rol'] ?? 'particular';
         </div>
         
         <nav class="site-nav">
-            <a href="/reparayaapp/index.php">Inicio</a>
+            <a href="/index.php">Inicio</a>
             
             <?php if ($rolUsuario === 'admin'): ?>
-                <a href="/reparayaapp/views/admin/gestion_avisos.php">Gestión Avisos</a>
-                <a href="/reparayaapp/views/admin/crear_aviso.php">+ Nuevo Aviso Admin</a>
-                <a href="/reparayaapp/views/admin/calendario.php">Calendario</a>
+                <a href="/views/admin/gestion_avisos.php">Gestión Avisos</a>
+                <a href="/views/admin/crear_aviso.php">+ Nuevo Aviso Admin</a>
+                <a href="/views/admin/calendario.php">Calendario</a>
             <?php elseif ($rolUsuario === 'tecnico'): ?>
-                <a href="/reparayaapp/views/tecnico/agenda.php">Mi Agenda</a>
+                <a href="/views/tecnico/agenda.php">Mi Agenda</a>
             <?php elseif ($rolUsuario === 'particular'): ?>
-                <a href="/reparayaapp/views/cliente/mis_avisos.php">Mis Avisos</a>
-                <a href="/reparayaapp/views/cliente/nueva_solicitud.php">+ Nueva Solicitud</a>
+                <a href="/views/cliente/mis_avisos.php">Mis Avisos</a>
+                <a href="/views/cliente/nueva_solicitud.php">+ Nueva Solicitud</a>
             <?php endif; ?>
 
-            <a href="/reparayaapp/views/perfil.php" class="nav-profile">Mi Perfil (<?= htmlspecialchars($nombreUsuario) ?>)</a>
-            <a href="/reparayaapp/controllers/AuthController.php?action=logout" class="nav-logout">Cerrar Sesión</a>
+            <a href="/views/perfil.php" class="nav-profile">Mi Perfil (<?= htmlspecialchars($nombreUsuario) ?>)</a>
+            <a href="/controllers/AuthController.php?action=logout" class="nav-logout">Cerrar Sesión</a>
         </nav>
     </div>
 </header>

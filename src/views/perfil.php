@@ -37,8 +37,6 @@ if ($rol === 'admin') {
 </head>
 <body>
     <div class="container container-medium">
-        <!-- Inclusión de la cabecera dinámica -->
-        <?php include __DIR__ . '/../layouts/header.php'; ?>
         <h1>Modificar Datos de Perfil</h1>
         <p>Rol en el sistema: <span class="badge"><?= htmlspecialchars($rol) ?></span></p>
 

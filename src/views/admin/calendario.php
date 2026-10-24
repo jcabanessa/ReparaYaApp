@@ -1,7 +1,7 @@
 <?php
 /**
  * views/admin/calendario.php
- * Vista de calendario/agenda global para el administrador con distinción por tipo y estado.
+ * Vista de calendario/agenda global para el administrador con vistas filtradas.
  */
 require_once __DIR__ . '/../../config/auth.php';
 require_once __DIR__ . '/../../config/db.php';
@@ -12,9 +12,31 @@ checkRole(['admin']);
 
 $incidenciaModel = new Incidencia($pdo);
 
-// Filtro opcional por vista (mensual, semanal, diaria) o fecha
-$vista = $_GET['vista']  ?? 'mensual';
-$incidencias = $incidenciaModel->obtenerTodas();
+// 1. Capturar y validar el filtro de vista
+$vistasPermitidas = ['mensual', 'semanal', 'diaria'];
+$vista = $_GET['vista'] ?? 'mensual';
+if (!in_array($vista, $vistasPermitidas)) {
+    $vista = 'mensual';
+}
+
+// 2. Obtener todas las incidencias
+$todasIncidencias = $incidenciaModel->obtenerTodas();
+$hoy = time();
+
+// 3. Filtrar dinámicamente según la vista seleccionada
+$incidencias = array_filter($todasIncidencias, function($inc) use ($vista, $hoy) {
+    $fechaServicio = strtotime($inc['fecha_servicio']);
+    if (!$fechaServicio) return false;
+
+    if ($vista === 'diaria') {
+        return date('Y-m-d', $fechaServicio) === date('Y-m-d', $hoy);
+    } elseif ($vista === 'semanal') {
+        return date('W', $fechaServicio) === date('W', $hoy) && date('Y', $fechaServicio) === date('Y', $hoy);
+    } else {
+        // Mensual por defecto
+        return date('m', $fechaServicio) === date('m', $hoy) && date('Y', $fechaServicio) === date('Y', $hoy);
+    }
+});
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -27,25 +49,30 @@ $incidencias = $incidenciaModel->obtenerTodas();
     <div class="container container-wide">
         <!-- Inclusión de la cabecera dinámica -->
         <?php include __DIR__ . '/../layouts/header.php'; ?>
+        
         <h1>Calendario y Agenda de Intervenciones</h1>
         <p>Administrador: <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong></p>
 
         <div class="mb-20">
-            <a href="gestion_avisos.php" class="btn" style="padding: 8px 12px; font-size: 14px; margin-top: 0;">← Volver a Gestión de Avisos</a>
-            <a href="../../controllers/AuthController.php?action=logout" class="float-right">Cerrar Sesión</a>
+            <a href="gestion_avisos.php" class="btn">← Volver a Gestión de Avisos</a>
         </div>
 
-        <!-- Filtros de Vista -->
+        <!-- Filtros de Vista Interactivos -->
         <div class="calendar-filters">
             <strong>Modo de Vista:</strong> 
-            <a href="calendario.php?vista=mensual">Mensual</a> | 
-            <a href="calendario.php?vista=semanal">Semanal</a> | 
-            <a href="calendario.php?vista=diaria">Diaria</a>
-            <span class="text-muted float-right" style="float: right;">Mostrando vista: <strong><?= ucfirst($vista) ?></strong></span>
+            <a href="calendario.php?vista=mensual" class="calendar-filter-link <?= $vista === 'mensual' ? 'active' : '' ?>">Mensual</a> | 
+            <a href="calendario.php?vista=semanal" class="calendar-filter-link <?= $vista === 'semanal' ? 'active' : '' ?>">Semanal</a> | 
+            <a href="calendario.php?vista=diaria" class="calendar-filter-link <?= $vista === 'diaria' ? 'active' : '' ?>">Diaria</a>
+            
+            <span class="calendar-filters-right">
+                Mostrando vista: <strong><?= ucfirst($vista) ?></strong> (<?= count($incidencias) ?> citas)
+            </span>
         </div>
 
         <?php if (empty($incidencias)): ?>
-            <p>No hay intervenciones programadas en el sistema.</p>
+            <div class="calendar-empty-state">
+                <p>No hay intervenciones programadas para este periodo (<?= ucfirst($vista) ?>).</p>
+            </div>
         <?php else: ?>
             <ul class="calendar-list">
                 <?php foreach ($incidencias as $inc): ?>
@@ -56,8 +83,8 @@ $incidencias = $incidenciaModel->obtenerTodas();
                     <li class="calendar-item <?= $claseUrgencia ?>">
                         <div class="calendar-item-info">
                             <div>
-                                <strong><?= htmlspecialchars($inc['localizador']) ?></strong> - 
-                                <span><?= htmlspecialchars($inc['nombre_especialidad']) ?></span>
+                                <span class="calendar-item-title"><?= htmlspecialchars($inc['localizador']) ?></span>
+                                <span class="badge-especialidad"><?= htmlspecialchars($inc['nombre_especialidad']) ?></span>
                                 
                                 <!-- Distintivo de Urgencia -->
                                 <?php if ($esUrgente): ?>
@@ -67,15 +94,17 @@ $incidencias = $incidenciaModel->obtenerTodas();
                                 <?php endif; ?>
 
                                 <!-- Distintivo de Estado -->
-                                <span class="badge"><?= htmlspecialchars($inc['estado']) ?></span>
+                                <span class="badge-estado-cal">
+                                    Estado: <?= htmlspecialchars($inc['estado']) ?>
+                                </span>
                             </div>
-                            <div class="font-small text-muted" style="margin-top: 5px;">
+                            <div class="calendar-meta">
                                 📅 <strong>Fecha Cita:</strong> <?= htmlspecialchars($inc['fecha_servicio']) ?> | 
                                 📍 <strong>Dirección:</strong> <?= htmlspecialchars($inc['direccion']) ?>
                             </div>
                         </div>
                         <div>
-                            <a href="gestion_avisos.php" class="btn" style="padding: 6px 12px; font-size: 13px; margin-top: 0;">Ver Detalle</a>
+                            <a href="gestion_avisos.php" class="btn-calendar-detail">Ver Detalle</a>
                         </div>
                     </li>
                 <?php endforeach; ?>

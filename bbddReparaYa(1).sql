@@ -59,3 +59,20 @@ CREATE TABLE IF NOT EXISTS historial_estados (
 );
 
 
+-- Datos iniciales de prueba (Contraseña para todos: '123456' hasheada)
+INSERT INTO usuarios (nombre, email, password, rol) VALUES 
+('Administrador Principal', 'admin@reparaya.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
+
+INSERT INTO especialidades (nombre_especialidad, precio_base) VALUES 
+('Fontanería', 50.00),
+('Electricidad', 60.00),
+('Climatización', 75.00);
+
+INSERT INTO usuarios (nombre, email, password, rol, telefono) 
+VALUES ('Carlos El Técnico', 'ctecnico@reparaya.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'tecnico', '600123456');
+
+-- LAST_INSERT_ID() devuelve el último ID insertado en la sesion actual.
+FOREIGN_KEY_CHECKS=0; -- Desactivamos temporalmente las comprobaciones de claves foráneas para evitar errores si no hay usuarios insertados aún.
+INSERT INTO tecnicos (usuario_id, nombre_completo, especialidad_id) 
+VALUES (3,'Carlos Paredes Garcia', 1);
+FOREIGN_KEY_CHECKS=1; -- Reactivamos las comprobaciones de claves foráneas.

@@ -34,6 +34,7 @@ $success = $_GET['success'] ?? null;
     <div class="container container-wide">
         <!-- Inclusión de la cabecera dinámica -->
         <?php include __DIR__ . '/../layouts/header.php'; ?>
+        
         <h1>Panel de Administración - Gestión de Avisos</h1>
         <p>Administrador: <strong><?= htmlspecialchars($_SESSION['nombre']) ?></strong></p>
 
@@ -81,10 +82,15 @@ $success = $_GET['success'] ?? null;
                 </thead>
                 <tbody>
                     <?php foreach ($incidencias as $inc): ?>
+                        <!-- Distintivo de Urgencia -->
                         <tr>
                             <td><strong><?= htmlspecialchars($inc['localizador']) ?></strong></td>
                             <td><?= htmlspecialchars($inc['cliente_nombre']) ?></td>
-                            <td><?= htmlspecialchars($inc['nombre_especialidad']) ?> (<?= htmlspecialchars($inc['tipo_urgencia']) ?>)</td>
+                            <td><?= htmlspecialchars($inc['nombre_especialidad']) ?> (<?php if ($inc['tipo_urgencia'] === 'Urgente'): ?>
+                        <span class="badge-urgente">Urgente</span>
+                    <?php else: ?>
+                        <span class="badge-estandar">Estándar</span>
+                    <?php endif; ?>)</td>
                             <td><?= htmlspecialchars($inc['fecha_servicio']) ?></td>
                             <td><span class="badge"><?= htmlspecialchars($inc['estado']) ?></span></td>
                             <td><?= htmlspecialchars($inc['tecnico_nombre'] ?? 'Sin asignar') ?></td>

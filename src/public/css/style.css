@@ -273,3 +273,151 @@ a:hover {
     background-color: #34495e;
     color: #ecf0f1;
 }
+
+/* ==========================================
+   ESTILOS DE LA VISTA DE CALENDARIO Y AGENDA
+   ========================================== */
+
+.calendar-filters {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+
+.calendar-filter-link {
+    margin: 0 5px;
+    text-decoration: none;
+    color: #3498db;
+}
+
+.calendar-filter-link.active {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.calendar-filters-right {
+    float: right;
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.calendar-empty-state {
+    padding: 20px;
+    background: #fff;
+    border-radius: 6px;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+.calendar-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.calendar-item {
+    background: #fff;
+    border-left: 5px solid #3498db;
+    color: #2c3e50;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.calendar-item.urgente {
+    border-left-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.calendar-item-title {
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.badge-especialidad {
+    margin-left: 10px;
+    background: #ecf0f1;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #333;
+}
+
+.badge-urgente-cal {
+    background: #e74c3c;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.badge-estandar-cal {
+    background: #3498db;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.badge-estado-cal {
+    background: #2c3e50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.calendar-meta {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #555;
+}
+
+.btn-calendar-detail {
+    padding: 6px 12px;
+    font-size: 13px;
+    background: #34495e;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.btn-calendar-detail:hover {
+    background: #2c3e50;
+}
+
+/* ==========================================
+   BADGES GLOBALES DE TIPO DE URGENCIA
+   ========================================== */
+
+.badge-urgente {
+    background-color: #e74c3c !important; /* Rojo */
+    color: #ffffff !important;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.badge-estandar {
+    background-color: #3498db !important; /* Azul */
+    color: #ffffff !important;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 5px;
+}

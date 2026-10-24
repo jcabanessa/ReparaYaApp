@@ -85,14 +85,14 @@ $success = $_GET['success'] ?? null;
                             </td>
                             <td class="text-center">
                                 <?php if ($inc['estado'] === 'Asignada'): ?>
-                                    <form action="../../controllers/TechController.php?action=cambiar_estado" method="POST">
+                                    <form action="../../controllers/TecnicoController.php?action=cambiar_estado" method="POST">
                                         <input type="hidden" name="incidencia_id" value="<?= $inc['id'] ?>">
                                         <input type="hidden" name="nuevo_estado" value="En curso">
                                         <input type="text" name="observaciones" placeholder="Observación opcional" class="font-small mb-20" style="margin-top: 0; padding: 5px;">
                                         <button type="submit" class="btn" style="padding: 6px 12px; font-size: 13px; margin-top: 0;">Marcar En Curso</button>
                                     </form>
                                 <?php elseif ($inc['estado'] === 'En curso'): ?>
-                                    <form action="../../controllers/TechController.php?action=cambiar_estado" method="POST">
+                                    <form action="../../controllers/TecnicoController.php?action=cambiar_estado" method="POST">
                                         <input type="hidden" name="incidencia_id" value="<?= $incidencia_id ?? $inc['id'] ?>">
                                         <!-- Corrigiendo el id del form -->
                                         <input type="hidden" name="incidencia_id" value="<?= $inc['id'] ?>">

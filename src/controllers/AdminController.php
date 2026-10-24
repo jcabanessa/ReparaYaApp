@@ -1,7 +1,11 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 /** Controller/AdminController.php
  * Gestiona las acciones administrativas (asignar téncnicos, cancelar, filtrar avisos)
 */
+
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../config/auth.php';
 require_once __DIR__ . '/../models/Incidencia.php';
@@ -13,7 +17,7 @@ $incidenciaModel = new Incidencia($pdo);
 $action = $_GET['action'] ?? '';
 
 // Asignar técnico a una incidencia
-if ($action === 'asignar_tecnico' && $_SERVER['REQUEST_METHOD'] ==='POST') {
+if ($action === 'asignar' && $_SERVER['REQUEST_METHOD'] ==='POST') {
     $incidencia_id = $_POST['incidencia_id'] ?? '';
     $tecnico_id    = $_POST['tecnico_id'] ?? '';
     $usuario_id    = $_SESSION['usuario_id'] ??'';
