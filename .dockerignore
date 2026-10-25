@@ -1,0 +1,7 @@
+.git
+.env
+**/.env
+database
+estructura_actual.txt
+*.zip
+**/*.zip
