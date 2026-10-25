@@ -1,0 +1,3 @@
+Options -Indexes
+RewriteEngine On
+RewriteRule ^(core|models|controllers|views|cli)/ - [F,L,NC]

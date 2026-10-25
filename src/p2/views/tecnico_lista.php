@@ -1,0 +1,3 @@
+<p>Estas son las incidencias que tienes asignadas. Solo puedes iniciar o finalizar intervenciones propias.</p>
+<div class="table-scroll"><table><thead><tr><th>Localizador</th><th>Cliente</th><th>Servicio</th><th>Fecha</th><th>Estado</th><th></th></tr></thead><tbody>
+<?php foreach($incidencias as $i):?><tr><td><?=h($i['localizador'])?></td><td><?=h($i['cliente_nombre'])?></td><td><?=h($i['nombre_especialidad'])?></td><td><?=h(date_service($i['fecha_servicio']))?></td><td><?=label_estado($i['estado'])?></td><td><a href="<?=h(url('tecnico_detalle',['id'=>$i['id']]))?>">Abrir</a></td></tr><?php endforeach;?></tbody></table></div>
