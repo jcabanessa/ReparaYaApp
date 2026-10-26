@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     // Asignada -> En curso | En curso -> Finalizada
     try {
         // Consultamos el estado actual de la incidencia asignada a este técnico
-        $stmtCheck = $pdo->prepare("SELECT estado FROM incidencias WHERE id = :id AND id_tecnico = :tecnico_id");
+        $stmtCheck = $pdo->prepare("SELECT estado FROM incidencias WHERE id = :id AND tecnico_id = :tecnico_id");
         $stmtCheck->execute([':id' => $incidencia_id, ':tecnico_id' => $tecnico_id]);
         $incidencia = $stmtCheck->fetch();
 

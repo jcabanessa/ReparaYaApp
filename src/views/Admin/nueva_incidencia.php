@@ -22,15 +22,23 @@ require_once __DIR__ . '/../layouts/header.php';
                 <input type="hidden" name="accion" value="crear_incidencia">
 
                 <div class="form-group">
-                    <label for="tipo_servicio" class="form-label">Tipo de Servicio *</label>
-                    <input type="text" name="tipo_servicio" id="tipo_servicio" class="form-control" placeholder="Ej: Fontanería, Electricidad..." required>
+                    <label for="especialidad_id" class="form-label">Tipo de Servicio *</label>
+                    <!-- CAMBIO CRÍTICO 1: Ahora es un select con name="especialidad_id" -->
+                    <select name="especialidad_id" id="especialidad_id" class="form-control" required>
+                        <!-- Los values deben coincidir con los ID de tu tabla especialidades en la BD -->
+                        <option value="1">Fontanería</option>
+                        <option value="2">Electricidad</option>
+                        <option value="3">Climatización</option>
+                        <option value="4">Cerrajería</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label for="tipo_urgencia" class="form-label">Carácter del Servicio *</label>
                     <select name="tipo_urgencia" id="tipo_urgencia" class="form-control" required>
-                        <option value="estandar">Estándar (Mínimo 48h antelación)</option>
-                        <option value="urgente">Urgente</option>
+                        <!-- CAMBIO CRÍTICO 2: Los values ahora son idénticos al ENUM de la base de datos -->
+                        <option value="Estándar">Estándar (Mínimo 48h antelación)</option>
+                        <option value="Urgente">Urgente</option>
                     </select>
                 </div>
 

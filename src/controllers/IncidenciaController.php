@@ -29,12 +29,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $cliente_id      = $_SESSION['usuario_id'] ?? 0; // Aseguramos recuperar el ID del cliente logueado
 
     $fechaActual = new DateTime();
-    $fechaCita   = new DateTime($fecha_servicio);
+    // Le añadimos la hora para que el cálculo sea preciso
+    $fechaCita   = new DateTime($fecha_servicio . ' 09:00:00');
+
+   
+// Limpiamos el texto que viene del formulario del cliente (pasándolo a minúsculas sin tildes)
+    $tipoMinuscula = trim(str_replace(['á', 'é', 'í', 'ó', 'ú'], ['a', 'e', 'i', 'o', 'u'], strtolower($tipo_urgencia)));
+    $esEstandar = ($tipoMinuscula === 'estandar');
 
     // Validaciones de fecha y antelación
     if ($fechaCita < $fechaActual) {
         $error = "La fecha de la cita no puede ser anterior a la actual.";
-    } elseif (strtolower($tipo_urgencia) === 'estándar' && ($fechaCita->getTimestamp() - $fechaActual->getTimestamp()) < (48 * 3600)) {
+    } elseif ($esEstandar && ($fechaCita->getTimestamp() - $fechaActual->getTimestamp()) < (48 * 3600)) {
         $error = "Error de validación: Las solicitudes estándar deben realizarse con un mínimo de 48 horas de antelación.";
     } else {
         try {
