@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../config/db.php';
 
 // Validamos que el usuario sea el Administrador
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 
@@ -16,16 +16,23 @@ $error = '';
 // Procesar los formularios (Alta Técnico, Baja Técnico, Nueva Especialidad)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     
-    // ACCIÓN: ALTA DE TÉCNICO
+    // ==========================================
+    // ACCIÓN: ALTA DE TÉCNICO (Modificado para UOC 1:1)
+    // ==========================================
     if ($_POST['accion'] === 'crear_tecnico') {
         $nombre = trim($_POST['nombre']);
         $email = trim($_POST['email']);
         $password = $_POST['password'];
         $telefono = trim($_POST['telefono'] ?? '');
+        $especialidad_id = intval($_POST['especialidad_id'] ?? 1); // Recogemos la especialidad
         
         try {
-            // Encriptamos la contraseña como en el registro normal
             $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+            
+            // 1. Iniciamos la transacción
+            $pdo->beginTransaction();
+
+            // 2. Insertamos en usuarios
             $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, email, password, rol, telefono) VALUES (:nombre, :email, :password, 'tecnico', :telefono)");
             $stmt->execute([
                 ':nombre' => $nombre,
@@ -33,8 +40,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
                 ':password' => $passwordHash,
                 ':telefono' => $telefono
             ]);
-            $mensaje = "Técnico registrado correctamente en el sistema.";
+
+            // 3. Atrapamos el ID asignado
+            $nuevo_usuario_id = $pdo->lastInsertId();
+
+            // 4. Insertamos en la tabla tecnicos
+            $stmtTecnico = $pdo->prepare("INSERT INTO tecnicos (usuario_id, nombre_completo, especialidad_id, disponible) VALUES (:usuario_id, :nombre_completo, :especialidad_id, 1)");
+            $stmtTecnico->execute([
+                ':usuario_id'      => $nuevo_usuario_id,
+                ':nombre_completo' => $nombre,
+                ':especialidad_id' => $especialidad_id
+            ]);
+            
+            // 5. Confirmamos todo
+            $pdo->commit();
+            $mensaje = "Técnico registrado correctamente en el sistema (Tablas vinculadas).";
+            
         } catch (PDOException $e) {
+            // Si falla, deshacemos ambos
+            $pdo->rollBack();
             $error = "Error al crear el técnico. Es posible que el email ya exista.";
         }
     }
@@ -57,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
         $precio_base = floatval($_POST['precio_base']);
 
         try {
-            // Adaptado al nombre de tu columna: nombre_especialidad
             $stmt = $pdo->prepare("INSERT INTO especialidades (nombre_especialidad, precio_base) VALUES (:nombre_especialidad, :precio_base)");
             $stmt->execute([':nombre_especialidad' => $nombre_especialidad, ':precio_base' => $precio_base]);
             $mensaje = "Especialidad creada correctamente.";
@@ -71,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
 $tecnicos = $pdo->query("SELECT * FROM usuarios WHERE rol = 'tecnico' ORDER BY nombre ASC")->fetchAll();
 $especialidades = [];
 try {
-    // Adaptado al nombre de tu columna para el ORDER BY
     $especialidades = $pdo->query("SELECT * FROM especialidades ORDER BY nombre_especialidad ASC")->fetchAll();
 } catch (PDOException $e) {
     $error = "Error al cargar las especialidades.";
@@ -110,6 +132,17 @@ require_once __DIR__ . '/../layouts/header.php';
                 <div class="form-group">
                     <input type="password" name="password" placeholder="Contraseña de acceso" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
                 </div>
+                
+                <!-- NUEVO: Selector de especialidad al crear técnico -->
+                <div class="form-group">
+                    <select name="especialidad_id" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
+                        <option value="">Seleccionar Especialidad...</option>
+                        <?php foreach ($especialidades as $esp): ?>
+                            <option value="<?php echo $esp['id']; ?>"><?php echo htmlspecialchars($esp['nombre_especialidad']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <button type="submit" style="background: #ff6600; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">+ Dar de Alta Técnico</button>
             </form>
 
@@ -173,7 +206,6 @@ require_once __DIR__ . '/../layouts/header.php';
                     <?php else: ?>
                         <?php foreach ($especialidades as $esp): ?>
                             <tr style="border-bottom: 1px solid #1a1a1a;">
-                                <!-- Impresión de la variable usando nombre_especialidad -->
                                 <td style="padding: 8px; color: #fff;"><?php echo htmlspecialchars($esp['nombre_especialidad']); ?></td>
                                 <td style="padding: 8px; color: #10b981; font-weight: bold; text-align: right;">
                                     <?php echo number_format($esp['precio_base'], 2); ?> €

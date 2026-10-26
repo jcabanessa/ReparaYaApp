@@ -11,26 +11,49 @@ require_once __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 
-    <?php if (!empty($error)): ?>
-        <p class="alert-error"><?php echo htmlspecialchars($error); ?></p>
+    <!-- Alerta de Éxito al Registrar / Cancelar Incidencia -->
+    <?php if (!empty($_SESSION['exito_incidencia'])): ?>
+    <div class="alert-success">
+        <?php 
+            echo htmlspecialchars($_SESSION['exito_incidencia']); 
+            unset($_SESSION['exito_incidencia']); 
+        ?>
+    </div>
     <?php endif; ?>
 
-    <div class="dashboard-grid">
-        <div class="dashboard-card">
-            <h3>Datos de la Cita</h3>
-            <form action="" method="POST">
-                <input type="hidden" name="accion" value="crear_incidencia">
+    <!-- Alerta de Error al Validar Incidencia -->
+    <?php if (!empty($_SESSION['error_incidencia'])): ?>
+    <div class="alert-error">
+        <?php 
+            echo htmlspecialchars($_SESSION['error_incidencia']); 
+            unset($_SESSION['error_incidencia']); 
+        ?>
+    </div>
+    <?php endif; ?>
+
+    <!-- El <form> envuelve todo el grid para que viajen todos los inputs -->
+    <form action="" method="POST">
+        <input type="hidden" name="accion" value="crear_incidencia">
+
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3>Datos de la Cita</h3>
 
                 <div class="form-group">
-                    <label for="tipo_servicio" class="form-label">Tipo de Servicio *</label>
-                    <input type="text" name="tipo_servicio" id="tipo_servicio" class="form-control" placeholder="Ej: Fontanería, Electricidad..." required>
+                    <label for="especialidad_id" class="form-label">Tipo de Servicio *</label>
+                    <select name="especialidad_id" id="especialidad_id" class="form-control" required>
+                        <option value="1">Fontanería</option>
+                        <option value="2">Electricidad</option>
+                        <option value="3">Climatización</option>
+                        <option value="4">Cerrajería</option>
+                    </select>
                 </div>
 
                 <div class="form-group">
                     <label for="tipo_urgencia" class="form-label">Carácter del Servicio *</label>
                     <select name="tipo_urgencia" id="tipo_urgencia" class="form-control" required>
-                        <option value="estandar">Estándar (Mínimo 48h antelación)</option>
-                        <option value="urgente">Urgente</option>
+                        <option value="Estándar">Estándar (Mínimo 48h antelación)</option>
+                        <option value="Urgente">Urgente</option>
                     </select>
                 </div>
 
@@ -43,10 +66,11 @@ require_once __DIR__ . '/../layouts/header.php';
                     <label for="franja_horaria" class="form-label">Franja Horaria *</label>
                     <input type="text" name="franja_horaria" id="franja_horaria" class="form-control" placeholder="Ej: Mañana (09:00 - 14:00)" required>
                 </div>
-        </div>
+            </div>
 
-        <div class="dashboard-card">
-            <h3>Ubicación y Detalle</h3>
+            <div class="dashboard-card">
+                <h3>Ubicación y Detalle</h3>
+
                 <div class="form-group">
                     <label for="direccion" class="form-label">Dirección de la Intervención *</label>
                     <input type="text" name="direccion" id="direccion" class="form-control" placeholder="Calle, número, piso..." required>
@@ -63,9 +87,9 @@ require_once __DIR__ . '/../layouts/header.php';
                 </div>
 
                 <button type="submit" class="btn-submit">Enviar Solicitud de Aviso</button>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

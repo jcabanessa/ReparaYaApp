@@ -11,8 +11,14 @@ require_once __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 
-    <?php if (!empty($error)): ?>
-        <p class="alert-error"><?php echo htmlspecialchars($error); ?></p>
+    <!-- Alerta de Error en Registro -->
+    <?php if (!empty($_SESSION['error_registro'])): ?>
+        <div class="alert-error">
+            <?php 
+                echo htmlspecialchars($_SESSION['error_registro']); 
+                unset($_SESSION['error_registro']); 
+            ?>
+        </div>
     <?php endif; ?>
 
     <div class="dashboard-card" style="max-width: 550px; margin: 0 auto;">

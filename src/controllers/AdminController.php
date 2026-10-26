@@ -7,7 +7,7 @@ require_once __DIR__ . '/../config/db.php';
 
 // Control estricto de acceso por rol 'admin'
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../views/auth/login.php');
+    header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 

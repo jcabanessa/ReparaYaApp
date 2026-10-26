@@ -10,16 +10,28 @@ require_once __DIR__ . '/../layouts/header.php';
             <p class="hero-subtitle">Consulta el estado y seguimiento de tus solicitudes de reparación.</p>
         </div>
         <div>
-            <a href="/views/incidencias/nueva.php" class="btn-orange">+ Nueva Solicitud</a>
+            <a href="<?php echo $base_url; ?>/views/incidencias/nueva.php" class="btn-orange">+ Nueva Solicitud</a>
         </div>
     </div>
 
-    <?php if (!empty($mensaje)): ?>
-        <p class="alert-success"><?php echo htmlspecialchars($mensaje); ?></p>
+    <!-- Alerta de Éxito al Registrar / Cancelar Incidencia -->
+    <?php if (!empty($_SESSION['exito_incidencia'])): ?>
+       <div class="alert-success">
+            <?php 
+                echo htmlspecialchars($_SESSION['exito_incidencia']); 
+                unset($_SESSION['exito_incidencia']); 
+            ?>
+        </div>
     <?php endif; ?>
 
-    <?php if (!empty($error)): ?>
-        <p class="alert-error"><?php echo htmlspecialchars($error); ?></p>
+    <!-- Alerta de Error -->
+    <?php if (!empty($_SESSION['error_incidencia'])): ?>
+        <div class="alert-error">
+            <?php 
+                echo htmlspecialchars($_SESSION['error_incidencia']); 
+                unset($_SESSION['error_incidencia']); 
+            ?>
+        </div>
     <?php endif; ?>
 
     <div class="dashboard-card">

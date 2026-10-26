@@ -4,35 +4,71 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/../../config/db.php';
 
+// Detección dinámica de $base_url para compatibilidad con UOC y Local
+$is_uoc = (strpos($_SERVER['HTTP_HOST'] ?? '', 'uoc.edu') !== false);
+$base_url = $is_uoc ? '/~uocx9' : '';
+
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../../views/auth/login.php');
+    header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 
-$mensaje = '';
-$error = '';
-
+// ==========================================
+// 1. PROCESAMIENTO DE ACCIONES (POST)
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'asignar_tecnico') {
     $incidencia_id = intval($_POST['incidencia_id'] ?? 0);
     $tecnico_id = intval($_POST['tecnico_id'] ?? 0);
 
     if ($incidencia_id > 0 && $tecnico_id > 0) {
         try {
-            $stmtEstado = $pdo->prepare("SELECT estado FROM incidencias WHERE id = :id");
-            $stmtEstado->execute([':id' => $incidencia_id]);
-            $estadoAnterior = $stmtEstado->fetchColumn() ?: 'Pendiente';
+            // 1. Obtenemos la fecha exacta y el estado actual de la incidencia que queremos asignar
+            $stmtInfo = $pdo->prepare("SELECT fecha_servicio, estado FROM incidencias WHERE id = :id");
+            $stmtInfo->execute([':id' => $incidencia_id]);
+            $infoIncidencia = $stmtInfo->fetch();
+            
+            $fecha_servicio_actual = $infoIncidencia['fecha_servicio'];
+            $estadoAnterior = $infoIncidencia['estado'] ?: 'Pendiente';
 
-            $stmt = $pdo->prepare("UPDATE incidencias SET tecnico_id = :tecnico, estado = 'Asignada' WHERE id = :id");
-            $stmt->execute([':tecnico' => $tecnico_id, ':id' => $incidencia_id]);
+            // 2. COMPROBACIÓN DE SOLAPAMIENTO (Misma fecha y hora)
+            $stmtConflicto = $pdo->prepare("
+                SELECT id FROM incidencias 
+                WHERE tecnico_id = :tecnico_id 
+                  AND fecha_servicio = :fecha_servicio 
+                  AND estado IN ('Asignada', 'En curso')
+                  AND id != :id_actual
+            ");
+            
+            $stmtConflicto->execute([
+                ':tecnico_id' => $tecnico_id,
+                ':fecha_servicio' => $fecha_servicio_actual,
+                ':id_actual' => $incidencia_id
+            ]);
 
-            registrarHistorial($pdo, $incidencia_id, $estadoAnterior, 'Asignada', $_SESSION['usuario_id'], 'Técnico asignado por el administrador.');
-            $mensaje = "Técnico asignado correctamente. Estado actualizado a 'Asignada'.";
+            // 3. Decidimos si asignamos o bloqueamos
+            if ($stmtConflicto->rowCount() > 0) {
+                // Bloqueo: El técnico ya tiene trabajo en ese momento exacto
+                $_SESSION['error_incidencia'] = "No se puede asignar: El técnico seleccionado ya tiene otro aviso programado para esa misma fecha y hora.";
+            } else {
+                // Éxito: El técnico está libre, procedemos a asignar
+                $stmt = $pdo->prepare("UPDATE incidencias SET tecnico_id = :tecnico, estado = 'Asignada' WHERE id = :id");
+                $stmt->execute([':tecnico' => $tecnico_id, ':id' => $incidencia_id]);
+
+                if (function_exists('registrarHistorial')) {
+                    registrarHistorial($pdo, $incidencia_id, $estadoAnterior, 'Asignada', $_SESSION['usuario_id'], 'Técnico asignado por el administrador.');
+                }
+                $_SESSION['exito_incidencia'] = "Técnico asignado correctamente. Estado actualizado a 'Asignada'.";
+            }
         } catch (PDOException $e) {
-            $error = "Error al asignar el técnico: " . $e->getMessage();
+            $_SESSION['error_incidencia'] = "Error al asignar el técnico: " . $e->getMessage();
         }
     } else {
-        $error = "Selecciona un técnico válido.";
+        $_SESSION['error_incidencia'] = "Selecciona un técnico válido.";
     }
+    
+    // REDIRECCIÓN LIMPIA (Patrón PRG)
+    header('Location: ' . $base_url . '/views/admin/panel.php');
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'cancelar_admin') {
@@ -45,13 +81,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $stmt = $pdo->prepare("UPDATE incidencias SET estado = 'Cancelada' WHERE id = :id");
         $stmt->execute([':id' => $incidencia_id]);
 
-        registrarHistorial($pdo, $incidencia_id, $estadoAnterior, 'Cancelada', $_SESSION['usuario_id'], 'Cancelación manual efectuada por el Administrador.');
-        $mensaje = "Incidencia cancelada con éxito.";
+        if (function_exists('registrarHistorial')) {
+            registrarHistorial($pdo, $incidencia_id, $estadoAnterior, 'Cancelada', $_SESSION['usuario_id'], 'Cancelación manual efectuada por el Administrador.');
+        }
+        $_SESSION['exito_incidencia'] = "Incidencia cancelada con éxito.";
     } else {
-        $error = "No se puede cancelar en el estado actual.";
+        $_SESSION['error_incidencia'] = "No se puede cancelar en el estado actual.";
     }
+    
+    // REDIRECCIÓN LIMPIA
+    header('Location: ' . $base_url . '/views/admin/panel.php');
+    exit;
 }
 
+// ==========================================
+// 2. CONSULTAS GET PARA MOSTRAR LA TABLA
+// ==========================================
 $filtroEstado = $_GET['estado'] ?? '';
 if (!empty($filtroEstado)) {
     $sql = "SELECT i.*, u.nombre AS nombre_tecnico, e.nombre_especialidad 
@@ -84,24 +129,37 @@ require_once __DIR__ . '/../layouts/header.php';
             <p class="hero-subtitle">Gestión centralizada de avisos, filtrado por estados y asignación de técnicos.</p>
         </div>
         <div>
-            <a href="/views/admin/nueva_incidencia.php" class="btn-submit">+ Crear Aviso Manual</a>
+            <a href="<?php echo $base_url; ?>/views/admin/nueva_incidencia.php" class="btn-submit">+ Crear Aviso Manual</a>
         </div>
     </div>
 
-    <?php if (!empty($mensaje)): ?>
-        <p class="alert-success"><?php echo htmlspecialchars($mensaje); ?></p>
+    <!-- Alerta de Éxito al Asignar / Cancelar / Crear Incidencia -->
+    <?php if (!empty($_SESSION['exito_incidencia'])): ?>
+    <div class="alert-success" style="color: #22c55e; font-weight: 600; margin-bottom: 25px; background: #052e16; padding: 14px 18px; border-radius: 8px; border: 1px solid #22c55e; text-align: center;">
+        <?php 
+            echo htmlspecialchars($_SESSION['exito_incidencia']); 
+            unset($_SESSION['exito_incidencia']); 
+        ?>
+    </div>
     <?php endif; ?>
-    <?php if (!empty($error)): ?>
-        <p class="alert-error"><?php echo htmlspecialchars($error); ?></p>
+
+    <!-- Alerta de Error -->
+    <?php if (!empty($_SESSION['error_incidencia'])): ?>
+    <div class="alert-error">
+        <?php 
+            echo htmlspecialchars($_SESSION['error_incidencia']); 
+            unset($_SESSION['error_incidencia']); 
+        ?>
+    </div>
     <?php endif; ?>
 
     <div class="filter-bar">
         <span class="filter-label">Filtrar por estado:</span>
-        <a href="panel.php" class="filter-link <?php echo empty($filtroEstado) ? 'active' : ''; ?>">Todos</a>
-        <a href="panel.php?estado=Pendiente" class="filter-link <?php echo $filtroEstado === 'Pendiente' ? 'active' : ''; ?>">Pendientes</a>
-        <a href="panel.php?estado=Asignada" class="filter-link <?php echo $filtroEstado === 'Asignada' ? 'active' : ''; ?>">Asignadas</a>
-        <a href="panel.php?estado=En curso" class="filter-link <?php echo $filtroEstado === 'En curso' ? 'active' : ''; ?>">En curso</a>
-        <a href="panel.php?estado=Finalizada" class="filter-link <?php echo $filtroEstado === 'Finalizada' ? 'active' : ''; ?>">Finalizadas</a>
+        <a href="<?php echo $base_url; ?>/views/admin/panel.php" class="filter-link <?php echo empty($filtroEstado) ? 'active' : ''; ?>">Todos</a>
+        <a href="<?php echo $base_url; ?>/views/admin/panel.php?estado=Pendiente" class="filter-link <?php echo $filtroEstado === 'Pendiente' ? 'active' : ''; ?>">Pendientes</a>
+        <a href="<?php echo $base_url; ?>/views/admin/panel.php?estado=Asignada" class="filter-link <?php echo $filtroEstado === 'Asignada' ? 'active' : ''; ?>">Asignadas</a>
+        <a href="<?php echo $base_url; ?>/views/admin/panel.php?estado=En curso" class="filter-link <?php echo $filtroEstado === 'En curso' ? 'active' : ''; ?>">En curso</a>
+        <a href="<?php echo $base_url; ?>/views/admin/panel.php?estado=Finalizada" class="filter-link <?php echo $filtroEstado === 'Finalizada' ? 'active' : ''; ?>">Finalizadas</a>
     </div>
 
     <div class="dashboard-card">

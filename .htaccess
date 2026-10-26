@@ -1,0 +1,18 @@
+Options -MultiViews
+RewriteEngine On
+
+# Ruta base del servidor de la UOC
+RewriteBase /~uocx9/
+
+# Si la petición es un archivo o carpeta real, servirlo directamente
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Enrutar todo lo demás hacia el index.php principal
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Forzar a nivel de servidor que cualquier redirección HTTP añada el /~uocx9 si le falta
+<IfModule mod_headers.c>
+    Header edit Location ^/(?!~uocx9)(.*)$ /~uocx9/$1
+</IfModule>

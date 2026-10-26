@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../config/db.php';
 
 // Validar que el usuario sea Administrador
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: ../auth/login.php');
+    header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 

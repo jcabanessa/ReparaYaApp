@@ -1,26 +1,46 @@
 <?php
 // 1. INICIO DE SESIÓN
-// Iniciamos o recuperamos la sesión de PHP para poder guardar datos del usuario logueado.
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// 2. CONEXIÓN A LA BASE DE DATOS
-// Importamos el archivo centralizado de conexión PDO (Patrón MVC).
+// 2. CONEXIÓN Y CONFIGURACIÓN
 require_once __DIR__ . '/../config/db.php'; 
 
+$is_uoc = (strpos($_SERVER['HTTP_HOST'] ?? '', 'uoc.edu') !== false);
+$base_url = $is_uoc ? '/~uocx9' : '';
+
+// ==========================================
+// 3. SECCIÓN 1: REGISTRO DE USUARIO
+// ==========================================
 // ==========================================
 // 3. SECCIÓN 1: REGISTRO DE USUARIO
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'registro') {
     
-    $nombre   = trim($_POST['nombre']);
-    $email    = trim($_POST['email']);
+    $nombre   = trim($_POST['nombre'] ?? '');
+    $email    = trim($_POST['email'] ?? '');
     $telefono = trim($_POST['telefono'] ?? '');
-    $password = $_POST['password'];
+    $password = $_POST['password'] ?? '';
     
+    // Permitir que el formulario envíe el rol (si no se envía, por defecto es 'particular')
+    $rol = $_POST['rol'] ?? 'particular'; 
+    // Si el formulario envía una especialidad la cogemos, si no, le ponemos la 1 por defecto
+    $especialidad_id = $_POST['especialidad_id'] ?? 1; 
+    
+    if (empty($nombre) || empty($email) || empty($password)) {
+        $_SESSION['error_registro'] = "Por favor, rellena todos los campos obligatorios.";
+        header('Location: ' . $base_url . '/views/auth/registro.php');
+        exit();
+    }
+
     $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-    $rol = 'particular'; 
     
     try {
+        // 1. Iniciamos la transacción (fundamental para relaciones 1:1)
+        $pdo->beginTransaction();
+        
+        // 2. Insertamos siempre en la tabla principal de usuarios
         $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, email, telefono, password, rol) VALUES (:nombre, :email, :telefono, :password, :rol)");
         $stmt->execute([
             ':nombre'   => $nombre,
@@ -30,62 +50,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             ':rol'      => $rol
         ]);
         
-        header('Location: /views/auth/login.php');
-        exit;
+        // 3. Si el rol es técnico, insertamos también en la tabla tecnicos
+        if ($rol === 'tecnico') {
+            $nuevo_usuario_id = $pdo->lastInsertId(); // Cogemos el ID que MySQL le acaba de dar
+            
+            $stmtTecnico = $pdo->prepare("INSERT INTO tecnicos (usuario_id, nombre_completo, especialidad_id, disponible) VALUES (:usuario_id, :nombre_completo, :especialidad_id, 1)");
+            $stmtTecnico->execute([
+                ':usuario_id'      => $nuevo_usuario_id,
+                ':nombre_completo' => $nombre,
+                ':especialidad_id' => $especialidad_id
+            ]);
+        }
+        
+        // 4. Si todo ha ido bien, confirmamos y guardamos en la base de datos
+        $pdo->commit();
+        
+        $_SESSION['exito_login'] = "¡Cuenta creada con éxito! Ya puedes iniciar sesión.";
+        header('Location: ' . $base_url . '/views/auth/login.php');
+        exit();
         
     } catch (PDOException $e) {
-        // Código 23000 en MySQL indica entrada duplicada (clave única duplicada como el email)
+        // Si hay algún error (como un correo duplicado), deshacemos todo
+        $pdo->rollBack();
+        
         if ($e->getCode() == 23000) {
-            $error = "El correo electrónico introducido ya está registrado en la plataforma.";
+            $_SESSION['error_registro'] = "El correo electrónico ya está registrado en la plataforma.";
         } else {
-            $error = "Error al registrar el usuario. Inténtalo de nuevo.";
+            $_SESSION['error_registro'] = "Error al registrar el usuario: " . $e->getMessage();
         }
+        header('Location: ' . $base_url . '/views/auth/registro.php');
+        exit();
     }
 }
 
 // ==========================================
 // 4. SECCIÓN 2: INICIO DE SESIÓN (LOGIN)
 // ==========================================
-// Comprobamos si la petición es por POST y la acción enviada es 'login'.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'login') {
     
-    $email    = trim($_POST['email']);
-    $password = $_POST['password'];
+    $email    = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
     
-    // Buscamos en la base de datos al usuario que coincida con el email introducido
     $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = :email");
     $stmt->execute([':email' => $email]);
     $usuario = $stmt->fetch();
     
-    // VALIDACIÓN DE SEGURIDAD:
-    // 1. Verificamos que el usuario realmente exista en la base de datos.
-    // 2. Usamos password_verify() para comprobar si la contraseña escrita coincide con el hash cifrado.
+    // Verificación de existencia del usuario y contraseña Bcrypt
     if ($usuario && password_verify($password, $usuario['password'])) {
         
-        // Creamos las variables de sesión que mantendrán al usuario conectado
         $_SESSION['usuario_id'] = $usuario['id'];
-        $_SESSION['rol']      = $usuario['rol'];
+        $_SESSION['nombre']     = $usuario['nombre'];
+        $_SESSION['rol']        = $usuario['rol'];
         
-        // Redirigimos al usuario a la página de inicio (el menú cambiará automáticamente)
-        header('Location: ../../index.php');
-        exit;
+        if ($usuario['rol'] === 'admin') {
+        header('Location: ' . $base_url . '/views/admin/panel.php');
+        } else {
+             header('Location: ' . $base_url . '/index.php');
+            }
+            exit();
         
     } else {
-        // Si las credenciales fallan, redirigimos de vuelta al login añadiendo un parámetro de error por URL.
-       header('Location: /views/auth/login.php?error=1');
-        exit;
+        // Guardamos el error específico en la sesión para mostrarlo en el HTML
+        $_SESSION['error_login'] = "El correo electrónico o la contraseña son incorrectos.";
+        header('Location: ' . $base_url . '/views/auth/login.php');
+        exit();
     }
 }
 
 // ==========================================
 // 5. SECCIÓN 3: CERRAR SESIÓN (LOGOUT)
 // ==========================================
-// Si el usuario hace clic en el botón de cerrar sesión, se activa esta acción por GET.
 if (isset($_GET['accion']) && $_GET['accion'] === 'logout') {
-    
-    session_destroy(); // Destruimos por completo la sesión activa
-    
-    // Redirigimos al usuario a la página de inicio como invitado anónimo
-    header('Location: /index.php');
-        exit;
+    session_destroy();
+    header('Location: ' . $base_url . '/index.php');
+    exit();
 }
