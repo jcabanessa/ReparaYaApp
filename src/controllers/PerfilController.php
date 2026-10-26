@@ -6,7 +6,7 @@ require_once __DIR__ . '/../config/db.php';
 
 // Verificamos que el usuario esté autenticado
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../views/auth/login.php');
+    header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 

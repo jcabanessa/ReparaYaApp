@@ -5,18 +5,19 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/../config/db.php';
 
+// Detección dinámica de $base_url para producción (UOC) y Local
+$is_uoc = (strpos($_SERVER['HTTP_HOST'] ?? '', 'uoc.edu') !== false);
+$base_url = $is_uoc ? '/~uocx9' : '';
+
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ../views/auth/login.php');
+    header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 
 $cliente_id = $_SESSION['usuario_id'];
-$mensaje = '';
-$error = '';
-
 
 // ==========================================
-// 1. SOLICITAR NUEVA INCIDENCIA POR CLIENTE
+// 1. SOLICITAR NUEVA INCIDENCIA
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_incidencia') {
     
@@ -26,25 +27,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $descripcion     = trim($_POST['descripcion'] ?? '');
     $direccion       = trim($_POST['direccion'] ?? '');
     $especialidad_id = intval($_POST['especialidad_id'] ?? 1); 
-    $cliente_id      = $_SESSION['usuario_id'] ?? 0; // Aseguramos recuperar el ID del cliente logueado
 
     $fechaActual = new DateTime();
-    // Le añadimos la hora para que el cálculo sea preciso
     $fechaCita   = new DateTime($fecha_servicio . ' 09:00:00');
 
-   
-// Limpiamos el texto que viene del formulario del cliente (pasándolo a minúsculas sin tildes)
+    // Limpiamos el texto que viene del formulario (pasándolo a minúsculas sin tildes)
     $tipoMinuscula = trim(str_replace(['á', 'é', 'í', 'ó', 'ú'], ['a', 'e', 'i', 'o', 'u'], strtolower($tipo_urgencia)));
     $esEstandar = ($tipoMinuscula === 'estandar');
 
-    // Validaciones de fecha y antelación
+  
+  // Validaciones de fecha y antelación
     if ($fechaCita < $fechaActual) {
-        $error = "La fecha de la cita no puede ser anterior a la actual.";
+        $_SESSION['error_incidencia'] = "La fecha de la cita no puede ser anterior a la actual.";
+        header('Location: ' . $_SERVER['HTTP_REFERER']); // Devuelve a la página exacta de origen
+        exit();
     } elseif ($esEstandar && ($fechaCita->getTimestamp() - $fechaActual->getTimestamp()) < (48 * 3600)) {
-        $error = "Error de validación: Las solicitudes estándar deben realizarse con un mínimo de 48 horas de antelación.";
+        $_SESSION['error_incidencia'] = "Error de validación: Las solicitudes estándar deben realizarse con un mínimo de 48 horas de antelación.";
+        header('Location: ' . $_SERVER['HTTP_REFERER']); // Devuelve a la página exacta de origen
+        exit();
     } else {
         try {
-            // A. Obtenemos el precio base actual de la especialidad seleccionada para el Producto 3
+            // A. Obtenemos el precio base actual de la especialidad seleccionada
             $stmtPrecio = $pdo->prepare("SELECT precio_base FROM especialidades WHERE id = :id");
             $stmtPrecio->execute([':id' => $especialidad_id]);
             $especialidadData = $stmtPrecio->fetch();
@@ -67,24 +70,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 ':fecha_servicio'  => $fecha_servicio . ' 09:00:00',
                 ':tipo_urgencia'   => $tipo_urgencia,
                 ':estado'          => $estado_inicial,
-                ':precio_aplicado' => $precioBaseAplicado // Guardamos el precio fijo para las comisiones futuras
+                ':precio_aplicado' => $precioBaseAplicado
             ]);
 
-            // D. Registramos la acción en el historial de la incidencia
+          // D. Registramos la acción en el historial de la incidencia
             $nuevo_id = $pdo->lastInsertId();
             if (function_exists('registrarHistorial')) {
-                registrarHistorial($pdo, $nuevo_id, 'Ninguno', 'Pendiente', $cliente_id, 'Aviso registrado por el cliente.');
+                registrarHistorial($pdo, $nuevo_id, 'Ninguno', 'Pendiente', $cliente_id, 'Aviso registrado.');
             }
 
-            $mensaje = "¡Aviso creado con éxito! Localizador: " . $localizador;
+            // Mensaje de éxito en sesión
+            $_SESSION['exito_incidencia'] = "¡Aviso creado con éxito! Localizador asignado: " . $localizador;
+
+            // Redirección inteligente según el rol del usuario actual
+            if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'admin') {
+                header('Location: ' . $base_url . '/views/admin/panel.php');
+            } else {
+                header('Location: ' . $base_url . '/views/incidencias/mis_avisos.php');
+            }
+            exit();
             
         } catch (PDOException $e) {
-            $error = "Error en la base de datos: " . $e->getMessage();
+            $_SESSION['error_incidencia'] = "Error en la base de datos: " . $e->getMessage();
+            header('Location: ' . $base_url . '/views/incidencias/nueva.php');
+            exit();
         }
     }
 }
 
-// 2. CANCELACIÓN POR CLIENTE (REGLA ESTRICTA: MÁS DE 48 HORAS DE MARGEN)
+// ==========================================
+// 2. CANCELACIÓN POR CLIENTE
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'cancelar_cliente') {
     $incidencia_id = intval($_POST['incidencia_id'] ?? 0);
 
@@ -102,17 +118,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             $update = $pdo->prepare("UPDATE incidencias SET estado = 'Cancelada' WHERE id = :id");
             $update->execute([':id' => $incidencia_id]);
 
-            registrarHistorial($pdo, $incidencia_id, $estadoAnterior, 'Cancelada', $cliente_id, 'Cancelado por el cliente con más de 48h de antelación.');
-            $mensaje = "La solicitud ha sido cancelada correctamente.";
+            if (function_exists('registrarHistorial')) {
+                registrarHistorial($pdo, $incidencia_id, $estadoAnterior, 'Cancelada', $cliente_id, 'Cancelado por el cliente con más de 48h de antelación.');
+            }
+            $_SESSION['exito_incidencia'] = "La solicitud ha sido cancelada correctamente.";
         } else {
-            $error = "No es posible cancelar el aviso: Faltan menos de 48 horas para la cita programada.";
+            $_SESSION['error_incidencia'] = "No es posible cancelar el aviso: Faltan menos de 48 horas para la cita programada.";
         }
     } else {
-        $error = "No es posible cancelar la solicitud en su estado actual.";
+        $_SESSION['error_incidencia'] = "No es posible cancelar la solicitud en su estado actual.";
     }
+
+    header('Location: ' . $base_url . '/views/incidencias/mis_avisos.php');
+    exit();
 }
 
-// 3. CONSULTAR MIS AVISOS (CON JOIN A ESPECIALIDADES)
+// ==========================================
+// 3. CONSULTAR MIS AVISOS
+// ==========================================
 $stmtAvisos = $pdo->prepare("
     SELECT i.*, e.nombre_especialidad 
     FROM incidencias i 

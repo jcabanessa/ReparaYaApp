@@ -1,4 +1,6 @@
 <?php
+// Cargar la configuración de la base de datos (y la variable $base_url)
+require_once __DIR__ . '/../../config/db.php';
 // Iniciar sesión para poder destruirla
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -20,5 +22,5 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 // Redirigir al usuario a la página de inicio o login
-header('Location: /index.php');
+header('Location: ' . $base_url . '/index.php');
 exit;

@@ -1,2 +1,7 @@
 .env
+<<<<<<< Updated upstream
 wp-config.php
+=======
+wp-config.php
+db.php
+>>>>>>> Stashed changes

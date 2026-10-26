@@ -1,31 +1,31 @@
 <?php
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/../config/db.php';
 
+// Detección dinámica de $base_url para compatibilidad con UOC y Local
+$is_uoc = (strpos($_SERVER['HTTP_HOST'] ?? '', 'uoc.edu') !== false);
+$base_url = $is_uoc ? '/~uocx9' : '';
+
 // Verificamos que el usuario esté autenticado y sea estrictamente 'tecnico'
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_id'] ?? null) { // Nota: ajustaremos la validación de rol
-    // Validamos rol de técnico o admin (por si acaso el admin quiere supervisar)
-}
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'tecnico') {
-    header('Location: ../views/auth/login.php');
+    header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 
 $tecnico_id = $_SESSION['usuario_id'];
-$mensaje = '';
-$error = '';
 
-// Procesar cambio de estado de la incidencia (Asignada -> En curso -> Finalizada)
+// ==========================================
+// PROCESAR CAMBIO DE ESTADO (POST)
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'cambiar_estado') {
-    $incidencia_id = $_POST['incidencia_id'];
-    $nuevo_estado = $_POST['nuevo_estado'];
+    $incidencia_id = intval($_POST['incidencia_id'] ?? 0);
+    $nuevo_estado = $_POST['nuevo_estado'] ?? '';
 
-    // Validamos transiciones permitidas en el servidor (Requisito de la rúbrica)
-    // Asignada -> En curso | En curso -> Finalizada
     try {
-        // Consultamos el estado actual de la incidencia asignada a este técnico
+        // Consultamos el estado actual de la incidencia asignada a este técnico (usando tecnico_id)
         $stmtCheck = $pdo->prepare("SELECT estado FROM incidencias WHERE id = :id AND tecnico_id = :tecnico_id");
         $stmtCheck->execute([':id' => $incidencia_id, ':tecnico_id' => $tecnico_id]);
         $incidencia = $stmtCheck->fetch();
@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             $estadoActual = $incidencia['estado'];
             $transicionValida = false;
 
+            // Validamos transiciones permitidas
             if ($estadoActual === 'Asignada' && $nuevo_estado === 'En curso') {
                 $transicionValida = true;
             } elseif ($estadoActual === 'En curso' && $nuevo_estado === 'Finalizada') {
@@ -45,21 +46,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 $stmtUpdate = $pdo->prepare("UPDATE incidencias SET estado = :nuevo_estado WHERE id = :id");
                 $stmtUpdate->execute([':nuevo_estado' => $nuevo_estado, ':id' => $incidencia_id]);
                 
-                // Opcional: Registrar en historial (si se dispone de tabla historial)
-                $mensaje = "Estado actualizado a '{$nuevo_estado}' correctamente.";
+                // Registramos en el historial si la función existe
+                if (function_exists('registrarHistorial')) {
+                    registrarHistorial($pdo, $incidencia_id, $estadoActual, $nuevo_estado, $tecnico_id, "Estado actualizado a '{$nuevo_estado}' por el técnico.");
+                }
+
+                $_SESSION['exito_incidencia'] = "Estado actualizado a '{$nuevo_estado}' correctamente.";
             } else {
-                $error = "Transición de estado no permitida por las reglas del sistema.";
+                $_SESSION['error_incidencia'] = "Transición de estado no permitida por las reglas del sistema.";
             }
         } else {
-            $error = "Incidencia no encontrada o no asignada a tu usuario.";
+            $_SESSION['error_incidencia'] = "Incidencia no encontrada o no asignada a tu usuario.";
         }
     } catch (PDOException $e) {
-        $error = "Error en la base de datos: " . $e->getMessage();
+        $_SESSION['error_incidencia'] = "Error en la base de datos: " . $e->getMessage();
     }
+
+    // Redirección limpia (Patrón PRG)
+    header('Location: ' . $_SERVER['HTTP_REFERER']);
+    exit();
 }
 
-// Consultar las incidencias asignadas a este técnico
-$stmtIncidencias = $pdo->prepare("SELECT * FROM incidencias WHERE id_tecnico = :tecnico_id ORDER BY fecha_solicitud DESC");
+// ==========================================
+// CONSULTAR INCIDENCIAS ASIGNADAS AL TÉCNICO
+// ==========================================
+$stmtIncidencias = $pdo->prepare("
+    SELECT i.*, e.nombre_especialidad 
+    FROM incidencias i 
+    LEFT JOIN especialidades e ON i.especialidad_id = e.id 
+    WHERE i.tecnico_id = :tecnico_id 
+    ORDER BY i.fecha_servicio DESC
+");
 $stmtIncidencias->execute([':tecnico_id' => $tecnico_id]);
 $misIncidencias = $stmtIncidencias->fetchAll();
-?>

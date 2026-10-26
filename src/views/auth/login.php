@@ -11,8 +11,24 @@ require_once __DIR__ . '/../layouts/header.php';
         </div>
     </div>
 
-    <?php if (!empty($error)): ?>
-        <p class="alert-error"><?php echo htmlspecialchars($error); ?></p>
+    <!-- Alerta de Error en Login -->
+    <?php if (!empty($_SESSION['error_login'])): ?>
+        <div class="alert-error">
+            <?php 
+                echo htmlspecialchars($_SESSION['error_login']); 
+                unset($_SESSION['error_login']); 
+            ?>
+        </div>
+    <?php endif; ?>
+
+    <!-- Alerta de Éxito tras Registro -->
+    <?php if (!empty($_SESSION['exito_login'])): ?>
+        <div class="alert-success" style="color: #22c55e; font-weight: 600; margin-bottom: 25px; background: #052e16; padding: 14px 18px; border-radius: 8px; border: 1px solid #22c55e; text-align: center;">
+            <?php 
+                echo htmlspecialchars($_SESSION['exito_login']); 
+                unset($_SESSION['exito_login']); 
+            ?>
+        </div>
     <?php endif; ?>
 
     <div class="dashboard-card" style="max-width: 500px; margin: 0 auto;">
