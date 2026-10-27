@@ -4,93 +4,18 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/../../config/db.php';
 
-// Validamos que el usuario sea el Administrador
+// Validamos que el usuario sea Administrador
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
     header('Location: ' . $base_url . '/views/auth/login.php');
     exit;
 }
 
-$mensaje = '';
-$error = '';
+// Gestionar mensajes de sesión procedentes del controlador
+$mensaje = $_SESSION['mensaje'] ?? '';
+$error = $_SESSION['error'] ?? '';
+unset($_SESSION['mensaje'], $_SESSION['error']);
 
-// Procesar los formularios (Alta Técnico, Baja Técnico, Nueva Especialidad)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
-    
-    // ==========================================
-    // ACCIÓN: ALTA DE TÉCNICO (Modificado para UOC 1:1)
-    // ==========================================
-    if ($_POST['accion'] === 'crear_tecnico') {
-        $nombre = trim($_POST['nombre']);
-        $email = trim($_POST['email']);
-        $password = $_POST['password'];
-        $telefono = trim($_POST['telefono'] ?? '');
-        $especialidad_id = intval($_POST['especialidad_id'] ?? 1); // Recogemos la especialidad
-        
-        try {
-            $passwordHash = password_hash($password, PASSWORD_BCRYPT);
-            
-            // 1. Iniciamos la transacción
-            $pdo->beginTransaction();
-
-            // 2. Insertamos en usuarios
-            $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, email, password, rol, telefono) VALUES (:nombre, :email, :password, 'tecnico', :telefono)");
-            $stmt->execute([
-                ':nombre' => $nombre,
-                ':email' => $email,
-                ':password' => $passwordHash,
-                ':telefono' => $telefono
-            ]);
-
-            // 3. Atrapamos el ID asignado
-            $nuevo_usuario_id = $pdo->lastInsertId();
-
-            // 4. Insertamos en la tabla tecnicos
-            $stmtTecnico = $pdo->prepare("INSERT INTO tecnicos (usuario_id, nombre_completo, especialidad_id, disponible) VALUES (:usuario_id, :nombre_completo, :especialidad_id, 1)");
-            $stmtTecnico->execute([
-                ':usuario_id'      => $nuevo_usuario_id,
-                ':nombre_completo' => $nombre,
-                ':especialidad_id' => $especialidad_id
-            ]);
-            
-            // 5. Confirmamos todo
-            $pdo->commit();
-            $mensaje = "Técnico registrado correctamente en el sistema (Tablas vinculadas).";
-            
-        } catch (PDOException $e) {
-            // Si falla, deshacemos ambos
-            $pdo->rollBack();
-            $error = "Error al crear el técnico. Es posible que el email ya exista.";
-        }
-    }
-    
-    // ACCIÓN: BAJA DE TÉCNICO
-    elseif ($_POST['accion'] === 'eliminar_tecnico') {
-        $tecnico_id = $_POST['tecnico_id'];
-        try {
-            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = :id AND rol = 'tecnico'");
-            $stmt->execute([':id' => $tecnico_id]);
-            $mensaje = "Técnico eliminado de la plantilla.";
-        } catch (PDOException $e) {
-            $error = "No se puede eliminar el técnico (posiblemente tenga incidencias asignadas en el historial).";
-        }
-    }
-
-    // ACCIÓN: NUEVA ESPECIALIDAD (SERVICIO)
-    elseif ($_POST['accion'] === 'crear_especialidad') {
-        $nombre_especialidad = trim($_POST['nombre_especialidad']);
-        $precio_base = floatval($_POST['precio_base']);
-
-        try {
-            $stmt = $pdo->prepare("INSERT INTO especialidades (nombre_especialidad, precio_base) VALUES (:nombre_especialidad, :precio_base)");
-            $stmt->execute([':nombre_especialidad' => $nombre_especialidad, ':precio_base' => $precio_base]);
-            $mensaje = "Especialidad creada correctamente.";
-        } catch (PDOException $e) {
-            $error = "Error al registrar la especialidad.";
-        }
-    }
-}
-
-// Obtener datos para las tablas
+// Obtener datos para poblar las tablas y selectores de la vista
 $tecnicos = $pdo->query("SELECT * FROM usuarios WHERE rol = 'tecnico' ORDER BY nombre ASC")->fetchAll();
 $especialidades = [];
 try {
@@ -101,7 +26,6 @@ try {
 
 require_once __DIR__ . '/../layouts/header.php';
 ?>
-
 <div class="home-container" style="max-width: 1000px;">
     <h1 class="hero-title">Maestro de <span>Técnicos y Servicios</span></h1>
     <p class="hero-subtitle">Panel de gestión para la plantilla de profesionales y los tipos de servicio.</p>
@@ -121,7 +45,7 @@ require_once __DIR__ . '/../layouts/header.php';
         <div class="dashboard-card">
             <h3>Gestión de Técnicos</h3>
             
-            <form action="" method="POST" style="margin-top: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #2a2a2a;">
+           <form action="../../controllers/AdminController.php" method="POST" style="margin-top: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #2a2a2a;">
                 <input type="hidden" name="accion" value="crear_tecnico">
                 <div class="form-group">
                     <input type="text" name="nombre" placeholder="Nombre completo" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
@@ -163,7 +87,7 @@ require_once __DIR__ . '/../layouts/header.php';
                                 <td style="padding: 8px; color: #fff;"><?php echo htmlspecialchars($tec['nombre']); ?></td>
                                 <td style="padding: 8px; color: #9ca3af;"><?php echo htmlspecialchars($tec['email']); ?></td>
                                 <td style="padding: 8px; text-align: center;">
-                                    <form action="" method="POST" onsubmit="return confirm('¿Estás seguro de dar de baja a este técnico?');">
+                                    <form action="../../controllers/AdminController.php" method="POST" onsubmit="return confirm('¿Estás seguro de dar de baja a este técnico?');">
                                         <input type="hidden" name="accion" value="eliminar_tecnico">
                                         <input type="hidden" name="tecnico_id" value="<?php echo $tec['id']; ?>">
                                         <button type="submit" style="background: #ef4444; color: #fff; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;">Baja</button>
@@ -182,7 +106,7 @@ require_once __DIR__ . '/../layouts/header.php';
         <div class="dashboard-card">
             <h3>Tipos de Servicio y Precios Base</h3>
             
-            <form action="" method="POST" style="margin-top: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #2a2a2a;">
+            <form action="../../controllers/AdminController.php" method="POST" style="margin-top: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #2a2a2a;">
                 <input type="hidden" name="accion" value="crear_especialidad">
                 <div class="form-group">
                     <input type="text" name="nombre_especialidad" placeholder="Ej: Fontanería, Electricidad..." required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
