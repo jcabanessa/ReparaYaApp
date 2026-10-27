@@ -10,11 +10,24 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'admin') {
     exit;
 }
 
+// Filtrar por mes, semana y dia.
+$filtro = $_GET['filtro'] ?? 'todos';
+$whereClause = "";
+
+if ($filtro === 'mensual') {
+    $whereClause = "WHERE MONTH(i.fecha_servicio) = MONTH(CURRENT_DATE()) AND YEAR(i.fecha_servicio) = YEAR(CURRENT_DATE())";
+} elseif ($filtro === 'semanal') {
+    $whereClause = "WHERE YEARWEEK(i.fecha_servicio, 1) = YEARWEEK(CURRENT_DATE(), 1)";
+} elseif ($filtro === 'diaria') {
+    $whereClause = "WHERE DATE(i.fecha_servicio) = CURRENT_DATE()";
+}
+
 // Obtener todas las incidencias programadas
 $stmt = $pdo->query("SELECT i.*, u.nombre AS cliente_nombre, t.nombre AS tecnico_nombre 
                      FROM incidencias i 
                      LEFT JOIN usuarios u ON i.cliente_id = u.id 
                      LEFT JOIN usuarios t ON i.tecnico_id = t.id 
+                     $whereClause
                      ORDER BY i.fecha_servicio ASC");
 $incidencias = $stmt->fetchAll();
 
@@ -24,6 +37,12 @@ require_once __DIR__ . '/../layouts/header.php';
 <div class="home-container">
     <h1 class="hero-title">Calendario de <span>Intervenciones</span></h1>
     <p class="hero-subtitle">Vista temporal diferenciada por colores (Urgente vs Estándar) y distintivos explícitos de estado.</p>
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <a href="?filtro=todos" class="filter-link <?php echo $filtro === 'todos' ? 'active' : ''; ?>">Todos</a>
+        <a href="?filtro=mensual" class="filter-link <?php echo $filtro === 'mensual' ? 'active' : ''; ?>">Mensual</a>
+        <a href="?filtro=semanal" class="filter-link <?php echo $filtro === 'semanal' ? 'active' : ''; ?>">Semanal</a>
+        <a href="?filtro=diaria" class="filter-link <?php echo $filtro === 'diaria' ? 'active' : ''; ?>">Diaria</a>
+    </div>
 
     <!-- Leyenda del Calendario -->
     <div style="display: flex; gap: 20px; margin-bottom: 25px; background: #141414; padding: 15px; border-radius: 8px; border: 1px solid #2a2a2a;">
