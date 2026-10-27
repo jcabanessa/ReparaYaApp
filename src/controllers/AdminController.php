@@ -149,11 +149,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion'])) {
     // ----------------------------------------------------
     elseif ($_POST['accion'] === 'eliminar_tecnico') {
         $tecnico_id = $_POST['tecnico_id'];
+        
         try {
-            $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = :id AND rol = 'tecnico'");
-            $stmt->execute([':id' => $tecnico_id]);
-            $_SESSION['mensaje'] = "Técnico eliminado de la plantilla.";
+            // 0. Iniciamos la transacción
+            $pdo->beginTransaction();
+
+            // 1. PRIMERO: Borramos de la tabla dependiente (tecnicos)
+            $stmt1 = $pdo->prepare("DELETE FROM tecnicos WHERE usuario_id = :id");
+            $stmt1->execute([':id' => $tecnico_id]);
+
+            // 2. SEGUNDO: Borramos de la tabla principal (usuarios)
+            $stmt2 = $pdo->prepare("DELETE FROM usuarios WHERE id = :id AND rol = 'tecnico'");
+            $stmt2->execute([':id' => $tecnico_id]);
+
+            // 3. Confirmamos ambos borrados
+            $pdo->commit();
+            
+            $_SESSION['mensaje'] = "Técnico eliminado completamente de la plantilla.";
+            
         } catch (PDOException $e) {
+            // Si hay error (ej. incidencias asociadas), deshacemos todo
+            $pdo->rollBack();
             $_SESSION['error'] = "No se puede eliminar el técnico (posiblemente tenga incidencias asignadas en el historial).";
         }
     }
