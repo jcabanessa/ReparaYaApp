@@ -1,4 +1,3 @@
-
 <?php
 
 // Registrar un usuario
@@ -54,4 +53,16 @@ function eliminarUsuario($pdo, $id) {
     $stmt = $pdo->prepare("DELETE FROM usuarios WHERE id = :id");
 
     return $stmt->execute([':id' => $id]);
+}
+
+// Cambiar la contraseña de un usuario
+function actualizarPassword($pdo, $id, $nuevoHash) {
+    $stmt = $pdo->prepare(
+        "UPDATE usuarios SET password = :password WHERE id = :id"
+    );
+
+    return $stmt->execute([
+        ':password' => $nuevoHash,
+        ':id' => $id
+    ]);
 }
