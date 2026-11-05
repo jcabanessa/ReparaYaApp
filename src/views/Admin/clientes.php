@@ -1,4 +1,3 @@
-
 <?php
 session_start();
 
@@ -241,37 +240,49 @@ require_once __DIR__ . '/../layouts/header.php';
             <p>No hay clientes registrados.</p>
         <?php else: ?>
             <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Correo</th>
-                            <th>Teléfono</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($clientes as $cliente): ?>
+                <div class="table-responsive clientes-table">
+                    <table class="admin-table">
+                        <thead>
                             <tr>
-                                <td><?= htmlspecialchars($cliente['nombre']) ?></td>
-                                <td><?= htmlspecialchars($cliente['email']) ?></td>
-                                <td><?= htmlspecialchars($cliente['telefono'] ?? '') ?></td>
-                                <td>
-                                    <a href="<?= $base_url ?>/views/admin/clientes.php?editar=<?= (int)$cliente['id'] ?>">
-                                        Editar
-                                    </a>
-
-                                    <form method="POST" style="display: inline;"
-                                          onsubmit="return confirm('¿Seguro que quieres eliminar este cliente?');">
-                                        <input type="hidden" name="accion" value="eliminar">
-                                        <input type="hidden" name="id" value="<?= (int)$cliente['id'] ?>">
-                                        <button type="submit">Eliminar</button>
-                                    </form>
-                                </td>
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>Teléfono</th>
+                                <th>Acciones</th>
                             </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($clientes as $cliente): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($cliente['nombre']) ?></td>
+                                    <td><?= htmlspecialchars($cliente['email']) ?></td>
+                                    <td><?= htmlspecialchars($cliente['telefono'] ?? '') ?></td>
+                                    <td class="action-cell">
+                                        <div class="action-group">
+                                            <a
+                                                class="btn-editar"
+                                                href="<?= $base_url ?>/views/admin/clientes.php?editar=<?= (int)$cliente['id'] ?>"
+                                            >
+                                                Editar
+                                            </a>
+
+                                            <form
+                                                method="POST"
+                                                onsubmit="return confirm('¿Seguro que quieres eliminar este cliente?');"
+                                            >
+                                                <input type="hidden" name="accion" value="eliminar">
+                                                <input type="hidden" name="id" value="<?= (int)$cliente['id'] ?>">
+
+                                                <button type="submit" class="btn-eliminar">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         <?php endif; ?>
     </div>
