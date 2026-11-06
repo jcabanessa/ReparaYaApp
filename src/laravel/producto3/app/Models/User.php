@@ -2,31 +2,49 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    // Laravel buscará automáticamente 'laravel_usuarios' gracias al prefijo global
+    protected $table = 'usuarios'; 
+
+    // Ajusta los campos según la estructura real de tu tabla antigua
+    protected $fillable = [
+        'nombre',
+        'email',
+        'password',
+        'rol', // 'admin', 'tecnico', 'cliente'
+        'telefono',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+
+    // Métodos auxiliares para verificar roles rápidamente
+    public function isAdmin()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->rol === 'admin';
+    }
+
+    public function isTecnico()
+    {
+        return $this->rol === 'tecnico';
+    }
+
+    public function isCliente()
+    {
+        return $this->rol === 'cliente';
     }
 }
