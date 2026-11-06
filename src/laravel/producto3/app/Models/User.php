@@ -13,12 +13,11 @@ class User extends Authenticatable
     // Laravel buscará automáticamente 'laravel_usuarios' gracias al prefijo global
     protected $table = 'usuarios'; 
 
-    // Ajusta los campos según la estructura real de tu tabla antigua
     protected $fillable = [
         'nombre',
         'email',
         'password',
-        'rol', // 'admin', 'tecnico', 'cliente'
+        'rol', // 'admin', 'tecnico', 'particular'
         'telefono',
     ];
 
@@ -43,8 +42,8 @@ class User extends Authenticatable
         return $this->rol === 'tecnico';
     }
 
-    public function isCliente()
+    public function isParticular()
     {
-        return $this->rol === 'cliente';
+        return $this->rol === 'particular';
     }
 }
