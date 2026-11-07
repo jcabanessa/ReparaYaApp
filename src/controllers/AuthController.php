@@ -6,6 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // 2. CONEXIÓN Y CONFIGURACIÓN
 require_once __DIR__ . '/../config/db.php'; 
+require_once __DIR__ . '/../models/UsuarioModel.php';
 
 $is_uoc = (strpos($_SERVER['HTTP_HOST'] ?? '', 'uoc.edu') !== false);
 $base_url = $is_uoc ? '/~uocx9' : '';
@@ -30,14 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $rol = 'particular'; 
     
     try {
-        $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, email, telefono, password, rol) VALUES (:nombre, :email, :telefono, :password, :rol)");
-        $stmt->execute([
-            ':nombre'   => $nombre,
-            ':email'    => $email,
-            ':telefono' => $telefono,
-            ':password' => $passwordHash,
-            ':rol'      => $rol
-        ]);
+        registrarUsuario($pdo, $nombre, $email, $telefono, $passwordHash, $rol);
         
         $_SESSION['exito_login'] = "¡Cuenta creada con éxito! Ya puedes iniciar sesión.";
         header('Location: ' . $base_url . '/views/auth/login.php');
@@ -62,9 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     
-    $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE email = :email");
-    $stmt->execute([':email' => $email]);
-    $usuario = $stmt->fetch();
+    $usuario = obtenerUsuarioPorEmail($pdo, $email);
     
     // Verificación de existencia del usuario y contraseña Bcrypt
     if ($usuario && password_verify($password, $usuario['password'])) {

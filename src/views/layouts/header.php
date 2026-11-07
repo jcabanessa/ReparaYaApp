@@ -29,6 +29,7 @@ if (!isset($base_url)) {
                 <li><a href="<?php echo $base_url; ?>/views/admin/nueva_incidencia.php" class="btn-orange">+ Crear Aviso</a></li>
                 <li><a href="<?php echo $base_url; ?>/views/admin/calendario.php" class="nav-link">Calendario</a></li>
                 <li><a href="<?php echo $base_url; ?>/views/admin/servicios.php" class="nav-link">Servicios & Técnicos</a></li>
+                <li><a href="<?php echo $base_url; ?>/views/admin/clientes.php" class="nav-link">Gestión de Clientes</a></li>
             <?php elseif ($_SESSION['rol'] === 'tecnico'): ?>
                 <li><a href="<?php echo $base_url; ?>/views/tecnico/agenda.php" class="nav-link">Mi Agenda</a></li>
             <?php elseif ($_SESSION['rol'] === 'particular'): ?>

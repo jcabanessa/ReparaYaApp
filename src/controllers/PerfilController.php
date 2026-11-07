@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../models/UsuarioModel.php';
 
 // Verificamos que el usuario esté autenticado
 if (!isset($_SESSION['usuario_id'])) {
@@ -27,13 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     } else {
         try {
             // Actualizamos los datos del usuario
-            $stmt = $pdo->prepare("UPDATE usuarios SET nombre = :nombre, email = :email, telefono = :telefono WHERE id = :id");
-            $stmt->execute([
-                ':nombre'   => $nombre,
-                ':email'    => $email,
-                ':telefono' => $telefono,
-                ':id'       => $usuario_id
-            ]);
+            actualizarUsuario($pdo, $usuario_id, $nombre, $email, $telefono);
 
             // Actualizamos el nombre en la sesión si estuviera guardado
             $_SESSION['usuario_nombre'] = $nombre;
@@ -61,19 +56,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     } else {
         try {
             // Obtenemos la contraseña encriptada actual
-            $stmtPass = $pdo->prepare("SELECT password FROM usuarios WHERE id = :id");
-            $stmtPass->execute([':id' => $usuario_id]);
-            $user = $stmtPass->fetch();
+            $user = obtenerUsuarioPorId($pdo, $usuario_id);
 
             if ($user && password_verify($password_actual, $user['password'])) {
                 // Generamos el nuevo hash BCRYPT
                 $nuevoHash = password_hash($password_nueva, PASSWORD_BCRYPT);
                 
-                $stmtUpdate = $pdo->prepare("UPDATE usuarios SET password = :password WHERE id = :id");
-                $stmtUpdate->execute([
-                    ':password' => $nuevoHash,
-                    ':id'       => $usuario_id
-                ]);
+                actualizarPassword($pdo, $usuario_id, $nuevoHash);
 
                 $mensaje = "Contraseña actualizada con éxito.";
             } else {
@@ -88,7 +77,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 // ==========================================
 // 3. CONSULTAR DATOS ACTUALIZADOS DEL USUARIO
 // ==========================================
-$stmtUser = $pdo->prepare("SELECT id, nombre, email, rol, telefono, created_at FROM usuarios WHERE id = :id");
-$stmtUser->execute([':id' => $usuario_id]);
-$usuario = $stmtUser->fetch();
+$usuario = obtenerUsuarioPorId($pdo, $usuario_id);
 ?>
