@@ -30,11 +30,4 @@ Route::middleware(['auth', 'role:tecnico'])->prefix('tecnico')->group(function (
     post('/cambiar-estado', [TechController::class, 'cambiarEstado'])->name('tech.cambiar_estado');
 });
 
-// Rutas de Login y Logout
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Rutas de Registro
-Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
-Route::post('/register', [RegisterController::class, 'register']);
