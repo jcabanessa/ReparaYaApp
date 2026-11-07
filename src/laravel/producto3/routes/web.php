@@ -1,6 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\TechController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\RegisterController;
 
 Route::get('/', function () {
     return response()->json([
@@ -14,3 +18,16 @@ Route::get('/', function () {
         
     ]);
 });
+
+// Rutas de Administrador
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
+    get('/calendario', [AdminController::class, 'calendario'])->name('admin.calendario');
+    post('/asignar', [AdminController::class, 'asignarTecnico'])->name('admin.asignar');
+});
+
+// Rutas de Técnico
+Route::middleware(['auth', 'role:tecnico'])->prefix('tecnico')->group(function () {
+    post('/cambiar-estado', [TechController::class, 'cambiarEstado'])->name('tech.cambiar_estado');
+});
+
+
