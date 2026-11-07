@@ -8,6 +8,16 @@ use App\Models\User;
 
 class AdminController extends Controller
 {
+    // Panel principal de administración
+    public function index()
+    {
+        // Puedes pasar datos generales si los necesitas (ej. total de incidencias, técnicos activos, etc.)
+        $totalIncidencias = Incidencia::count();
+        $totalTecnicos = User::where('rol', 'tecnico')->count();
+
+        return view('admin.dashboard', compact('totalIncidencias', 'totalTecnicos'));
+    }
+
     // Mostrar calendario con filtrado temporal y relaciones
     public function calendario(Request $request)
     {
