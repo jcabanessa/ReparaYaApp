@@ -9,8 +9,8 @@ class Comision extends Model
 {
     use HasFactory;
 
-    // Indicamos explícitamente el nombre de la tabla con el prefijo laravel_
-    protected $table = 'laravel_comisiones';
+    
+    protected $table = 'comisiones';
 
     protected $fillable = [
         'empresa_gestora_id',
