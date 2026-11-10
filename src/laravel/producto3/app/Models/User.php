@@ -17,7 +17,7 @@ class User extends Authenticatable
         'nombre',
         'email',
         'password',
-        'rol', // 'admin', 'tecnico', 'particular'
+        'rol', // 'admin', 'tecnico', 'particular','gestora'
         'telefono',
     ];
 
@@ -45,5 +45,10 @@ class User extends Authenticatable
     public function isParticular()
     {
         return $this->rol === 'particular';
+    }
+
+    public function isGestora()
+    {
+        return $this->rol === 'gestora';
     }
 }
