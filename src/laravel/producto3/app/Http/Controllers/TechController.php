@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Incidencia;
+use App\Models\Comision;
+use App\Models\EmpresaGestora;
 
 class TechController extends Controller
 {
@@ -35,7 +37,26 @@ class TechController extends Controller
         $incidencia->estado = $request->nuevo_estado;
         $incidencia->save();
 
-        // Si se finaliza, opcionalmente podrías generar el registro en la tabla comisiones aquí
+        // Cuando la incidencia se marca como Finalizada:
+        if ($request->nuevo_estado === 'Finalizada') {
+            // Buscamos si la comunidad/cliente pertenece a una empresa gestora con comisión asignada
+            // (Asumiendo que tu incidencia tiene una relación con la comunidad o empresa gestora)
+            $gestora = EmpresaGestora::find($incidencia->empresa_gestora_id); // o el campo que corresponda
+
+            if ($gestora && $gestora->porcentaje_comision > 0) {
+                // Imagina que la incidencia tiene un campo 'precio_total' o 'coste'
+                $importeBase = $incidencia->precio_total ?? 100.00;
+                $importeComision = ($importeBase * $gestora->porcentaje_comision) / 100;
+
+                Comision::create([
+                    'empresa_gestora_id' => $gestora->id,
+                    'incidencia_id' => $incidencia->id,
+                    'importe' => $importeComision,
+                    'estado' => 'Pendiente'
+                ]);
+            }
+        }
+
 
         return redirect()->back()->with('success', 'Estado actualizado correctamente.');
     }
