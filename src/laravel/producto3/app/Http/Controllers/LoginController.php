@@ -30,6 +30,8 @@ class LoginController extends Controller
                 return redirect()->route('admin.dashboard');
             } elseif ($user->rol === 'tecnico') {
                 return redirect()->route('tecnico.panel');
+            } elseif ($user->rol === 'gestora') {
+                return redirect()->route('gestora.dashboard');
             } else {
                 return redirect()->route('cliente.dashboard');
             }

@@ -6,6 +6,7 @@ use App\Http\Controllers\TechController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\GestoraController;
 
 /*Route::get('/', function () {
     return response()->json([
@@ -28,6 +29,8 @@ Route::get('/', function () {
             return redirect()->route('admin.dashboard');
         } elseif ($rol === 'tecnico') {
             return redirect()->route('tecnico.agenda');
+        } elseif ($rol === 'gestora') {
+            return redirect()->route('gestora.dashboard');
         } else {
             return redirect()->route('cliente.avisos');
         }
@@ -69,4 +72,8 @@ Route::middleware(['auth', 'role:particular'])->group(function () {
     Route::get('/cliente/avisos', function () {
         return view('cliente.avisos');
     })->name('cliente.avisos');
+});
+
+Route::middleware(['auth', 'role:gestora'])->prefix('gestora')->group(function () {
+    Route::get('/', [GestoraController::class, 'dashboard'])->name('gestora.dashboard');
 });
