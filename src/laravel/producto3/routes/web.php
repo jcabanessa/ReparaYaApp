@@ -7,6 +7,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\GestoraController;
+use App\Http\Controllers\IncidenciaController;
 
 /*Route::get('/', function () {
     return response()->json([
@@ -76,4 +77,21 @@ Route::middleware(['auth', 'role:particular'])->group(function () {
 
 Route::middleware(['auth', 'role:gestora'])->prefix('gestora')->group(function () {
     Route::get('/', [GestoraController::class, 'dashboard'])->name('gestora.dashboard');
+});
+
+// Rutas generales de Incidencias protegidas por autenticación
+Route::middleware(['auth'])->group(function () {
+    // Creación de avisos
+    Route::get('/incidencias/nueva', [IncidenciaController::class, 'create'])->name('incidencias.create');
+    Route::post('/incidencias', [IncidenciaController::class, 'store'])->name('incidencias.store');
+
+    // Panel de cliente particular
+    Route::get('/cliente/avisos', [IncidenciaController::class, 'misAvisos'])->name('cliente.avisos');
+
+    // Panel de técnico y actualización de estados
+    Route::get('/tecnico/agenda', [IncidenciaController::class, 'agendaTecnico'])->name('tecnico.agenda');
+    Route::put('/incidencias/{id}/estado', [IncidenciaController::class, 'actualizarEstado'])->name('incidencias.estado');
+    
+    // Asignación de técnico desde administración
+    Route::put('/admin/incidencias/{id}/asignar', [IncidenciaController::class, 'asignarTecnico'])->name('admin.incidencias.asignar');
 });
