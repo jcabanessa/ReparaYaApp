@@ -12,13 +12,26 @@ use App\Models\EmpresaGestora;
 class AdminController extends Controller
 {
     // Panel principal de administración
-    public function index()
+    public function dashboard(Request $request)
     {
-        // Puedes pasar datos generales si los necesitas (ej. total de incidencias, técnicos activos, etc.)
-        $totalIncidencias = Incidencia::count();
-        $totalTecnicos = User::where('rol', 'tecnico')->count();
+        $filtroEstado = $request->query('estado');
 
-        return view('admin.dashboard', compact('totalIncidencias', 'totalTecnicos'));
+        // Consultar incidencias con relaciones de Eloquent
+        $query = Incidencia::with(['cliente', 'tecnico', 'comunidad', 'zona']);
+
+        if (!empty($filtroEstado)) {
+            $query->where('estado', $filtroEstado);
+        }
+
+        $incidencias = $query->orderBy('fecha_servicio', 'desc')->get();
+
+        // Obtener la lista de usuarios con rol 'tecnico' para los desplegables de asignación
+        $tecnicos = User::where('rol', 'tecnico')->get();
+
+        $totalIncidencias = $incidencias->count();
+        $totalTecnicos = $tecnicos->count();
+
+        return view('admin.dashboard', compact('incidencias', 'tecnicos', 'filtroEstado', 'totalIncidencias', 'totalTecnicos'));
     }
 
     // Mostrar calendario con filtrado temporal y relaciones
@@ -64,7 +77,7 @@ class AdminController extends Controller
     // Mostrar vista de gestión y listado de empresas gestoras
     public function gestoras()
     {
-        $empresas = EmpresaGestora::with('usuario')->orderBy('nombre_empresa', 'asc')->get();
+        $empresas = EmpresaGestora::with('usuario')->orderBy('nombre', 'asc')->get();
         return view('admin.empresas_gestoras', compact('empresas'));
     }
 
@@ -72,7 +85,7 @@ class AdminController extends Controller
     public function storeGestora(Request $request)
     {
         $request->validate([
-            'nombre_empresa' => ['required', 'string', 'max:150'],
+            'nombre' => ['required', 'string', 'max:150'],
             'cif' => ['required', 'string', 'max:20', 'unique:empresas_gestoras,cif'],
             'porcentaje_comision' => ['required', 'numeric', 'min:0', 'max:100'],
             'nombre_usuario' => ['required', 'string', 'max:255'],
@@ -96,7 +109,7 @@ class AdminController extends Controller
             // 2. Crear la empresa gestora vinculada al usuario y asignar el porcentaje de comisión
             EmpresaGestora::create([
                 'usuario_id' => $usuario->id,
-                'nombre_empresa' => $request->nombre_empresa,
+                'nombre' => $request->nombre,
                 'cif' => $request->cif,
                 'porcentaje_comision' => $request->porcentaje_comision,
             ]);

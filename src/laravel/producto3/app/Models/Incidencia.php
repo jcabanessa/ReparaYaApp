@@ -34,7 +34,7 @@ class Incidencia extends Model
     }
 
     // Relación: Pertenece a un técnico (Usuario)
-    public function técnico()
+    public function tecnico()
     {
         return $this->belongsTo(User::class, 'tecnico_id');
     }
