@@ -9,16 +9,24 @@ use App\Models\Comision;
 use App\Models\EmpresaGestora;
 use App\Models\Comunidad;
 use App\Models\Zona;
+use App\Models\Especialidad;
 
 class IncidenciaController extends Controller
 {
     // Mostrar formulario para crear nueva incidencia (Cliente o Admin)
     public function create()
     {
-        $comunidades = Comunidad::all();
-        $zonas = Zona::all();
+        $user = auth()->user();
+        if ($user->rol === 'gestora') {
+            // Buscar la gestora asociada al usuario y sus comunidades exclusivas
+            $gestora = EmpresaGestora::where('usuario_id', $user->id)->first();
+            $comunidades = $gestora ? Comunidad::where('empresa_gestora_id', $gestora->id)->get() : collect();
+        } else {
+            $comunidades = Comunidad::all();
+        }
+        $especialidades = Especialidad::all();
         $gestoras = EmpresaGestora::all();
-        return view('incidencias.crear', compact('comunidades', 'zonas', 'gestoras'));
+        return view('incidencias.crear', compact('comunidades', 'especialidades', 'gestoras'));
     }
 
     // Guardar nueva incidencia
@@ -31,9 +39,29 @@ class IncidenciaController extends Controller
             'descripcion' => ['required', 'string'],
             'comunidad_id' => ['nullable', 'exists:comunidades,id'],
             'zona_id' => ['nullable', 'exists:zonas,id'],
+            'especialidad_id' => ['nullable', 'exists:especialidades,id'],
             'empresa_gestora_id' => ['nullable', 'exists:empresas_gestoras,id'],
         ]);
 
+        $user = auth()->user();
+        $empresaGestoraId = $request->empresa_gestora_id;
+
+        // Si la que crea la incidencia es una gestora, forzamos su ID y validamos su comunidad
+        if ($user->rol === 'gestora') {
+            $gestora = EmpresaGestora::where('usuario_id', $user->id)->first();
+            if ($gestora) {
+                $empresaGestoraId = $gestora->id;
+                
+                // Verificar que la comunidad pertenece a esta gestora
+                $comunidadValida = Comunidad::where('id', $request->comunidad_id)
+                    ->where('empresa_gestora_id', $gestora->id)
+                    ->exists();
+
+                if (!$comunidadValida) {
+                    return back()->withInput()->withErrors(['error' => 'La comunidad seleccionada no pertenece a tu empresa gestora.']);
+                }
+            }
+        }
         // Generar localizador único
         $localizador = 'INC-' . strtoupper(substr(uniqid(), -6));
 
@@ -42,7 +70,8 @@ class IncidenciaController extends Controller
             'cliente_id' => auth()->id(), // Si la crea el admin, se puede adaptar para permitir seleccionar cliente
             'comunidad_id' => $request->comunidad_id,
             'zona_id' => $request->zona_id,
-            'empresa_gestora_id' => $request->empresa_gestora_id,
+            'especialidad_id' => $request->especialidad_id,
+            'empresa_gestora_id' => $empresaGestoraId,
             'tipo_urgencia' => $request->tipo_urgencia,
             'fecha_servicio' => $request->fecha_servicio,
             'direccion' => $request->direccion,
@@ -50,7 +79,11 @@ class IncidenciaController extends Controller
             'estado' => 'Pendiente',
         ]);
 
-        $redirectRoute = auth()->user()->rol === 'admin' ? 'admin.dashboard' : 'cliente.avisos';
+        $redirectRoute = match($user->rol) {
+            'admin' => 'admin.dashboard',
+            'gestora' => 'gestora.dashboard',
+            default => 'cliente.avisos'
+        };
         return redirect()->route($redirectRoute)->with('success', 'Incidencia creada correctamente con localizador: ' . $localizador);
     }
 

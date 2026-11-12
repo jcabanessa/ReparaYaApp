@@ -4,13 +4,13 @@
 <div class="home-container" style="max-width: 700px;">
     <div class="page-header">
         <div>
-            <h1 class="hero-title">Nueva <span>Solicitud de Reparación</span></h1>
-            <p class="hero-subtitle">Completa los detalles de la incidencia para tramitarla con nuestros técnicos.</p>
+            <h1 class="hero-title">Nueva <span>Solicitud de Incidencia</span></h1>
+            <p class="hero-subtitle">Completa los datos del aviso para tramitarlo en el sistema.</p>
         </div>
     </div>
 
     @if($errors->any())
-        <div class="alert-error">
+        <div class="alert-error" style="background: #450a0a; border: 1px solid #ef4444; color: #f87171; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
             <ul style="list-style: none; margin: 0; padding: 0;">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -32,38 +32,48 @@
             </div>
 
             <div class="form-group" style="margin-bottom: 15px;">
-                <label for="fecha_servicio" class="form-label">Fecha y Hora Preferida para la Cita *</label>
-                <input type="datetime-local" name="fecha_servicio" id="fecha_servicio" class="form-control" required>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label for="direccion" class="form-label">Dirección del Inmueble *</label>
-                <input type="text" name="direccion" id="direccion" class="form-control" placeholder="Calle, Número, Piso, Ciudad" required>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 15px;">
-                <label for="descripcion" class="form-label">Descripción de la Avería / Incidencia *</label>
-                <textarea name="descripcion" id="descripcion" rows="4" class="form-control" placeholder="Describe brevemente el problema..." required></textarea>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 15px;">
                 <label for="especialidad_id" class="form-label">Especialidad / Tipo de Servicio *</label>
                 <select name="especialidad_id" id="especialidad_id" class="form-control" required>
                     <option value="">Selecciona una especialidad...</option>
-                    @foreach(\App\Models\Especialidad::all() as $esp)
+                    @foreach($especialidades as $esp)
                         <option value="{{ $esp->id }}">
-                            {{ $esp->nombre }} ({{ number_format($esp->precio_base, 2) }} €)
+                            {{ $esp->nombre }} (Precio Base: {{ number_format($esp->precio_base, 2) }} €)
                         </option>
                     @endforeach
                 </select>
             </div>
 
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="comunidad_id" class="form-label">Comunidad *</label>
+                <select name="comunidad_id" id="comunidad_id" class="form-control" required>
+                    <option value="">Selecciona una comunidad...</option>
+                    @foreach($comunidades as $comunidad)
+                        <option value="{{ $comunidad->id }}">{{ $comunidad->nombre }} - {{ $comunidad->direccion }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="fecha_servicio" class="form-label">Fecha y Hora Preferida *</label>
+                <input type="datetime-local" name="fecha_servicio" id="fecha_servicio" class="form-control" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="direccion" class="form-label">Dirección Específica del Inmueble *</label>
+                <input type="text" name="direccion" id="direccion" class="form-control" placeholder="Ej: Calle Mayor 12, 2º B" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label for="descripcion" class="form-label">Descripción de la Avería *</label>
+                <textarea name="descripcion" id="descripcion" rows="4" class="form-control" placeholder="Detalla el problema observado..." required></textarea>
+            </div>
+
             @if(auth()->user()->rol === 'admin')
                 <div class="form-group" style="margin-bottom: 20px;">
-                    <label for="empresa_gestora_id" class="form-label">Empresa Gestora Asociada (Opcional)</label>
+                    <label for="empresa_gestora_id" class="form-label">Empresa Gestora (Opcional si es externa)</label>
                     <select name="empresa_gestora_id" id="empresa_gestora_id" class="form-control">
-                        <option value="">Ninguna / Directa</option>
-                        @foreach(App\Models\EmpresaGestora::all() as $gestora)
+                        <option value="">Ninguna (Gestión Directa)</option>
+                        @foreach($gestoras as $gestora)
                             <option value="{{ $gestora->id }}">{{ $gestora->nombre_empresa }}</option>
                         @endforeach
                     </select>
