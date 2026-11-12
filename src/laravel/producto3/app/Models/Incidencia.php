@@ -62,4 +62,9 @@ class Incidencia extends Model
     {
         return $this->belongsTo(EmpresaGestora::class, 'empresa_gestora_id');
     }
+
+    public function especialidad()
+    {
+        return $this->belongsTo(Especialidad::class, 'especialidad_id');
+    }
 }

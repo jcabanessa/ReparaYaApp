@@ -77,7 +77,7 @@ class IncidenciaController extends Controller
             'estado' => ['required', 'in:Pendiente,Asignada,En curso,Finalizada,Cancelada'],
         ]);
 
-        $incidencia = Incidencia::findOrFail($id);
+        $incidencia = Incidencia::with('especialidad')->findOrFail($id);
         $estadoAnterior = $incidencia->estado;
         $incidencia->estado = $request->estado;
         $incidencia->save();
@@ -85,10 +85,9 @@ class IncidenciaController extends Controller
         // Si la incidencia pasa a 'Finalizada' y tiene una empresa gestora asociada, generamos la comisión automáticamente
         if ($request->estado === 'Finalizada' && $estadoAnterior !== 'Finalizada' && $incidencia->empresa_gestora_id) {
             $gestora = EmpresaGestora::find($incidencia->empresa_gestora_id);
-            if ($gestora && $gestora->porcentaje_comision > 0) {
-                // Supongamos un coste fijo base de servicio o calculado (ej: 100€ o según tarifa)
-                $importeBaseServicio = 120.00; 
-                $importeComision = ($importeBaseServicio * $gestora->porcentaje_comision) / 100;
+            if ($gestora && $gestora->porcentaje_comision > 0 && $incidencia->especialidad) {
+                $precio_base = (float) $incidencia->especialidad->precio_base; 
+                $importeComision = round(($precio_base * $gestora->porcentaje_comision) / 100, 2);
 
                 Comision::create([
                     'empresa_gestora_id' => $gestora->id,

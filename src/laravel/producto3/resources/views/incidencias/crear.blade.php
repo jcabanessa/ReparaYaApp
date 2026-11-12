@@ -46,6 +46,18 @@
                 <textarea name="descripcion" id="descripcion" rows="4" class="form-control" placeholder="Describe brevemente el problema..." required></textarea>
             </div>
 
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="especialidad_id" class="form-label">Especialidad / Tipo de Servicio *</label>
+                <select name="especialidad_id" id="especialidad_id" class="form-control" required>
+                    <option value="">Selecciona una especialidad...</option>
+                    @foreach(\App\Models\Especialidad::all() as $esp)
+                        <option value="{{ $esp->id }}">
+                            {{ $esp->nombre }} ({{ number_format($esp->precio_base, 2) }} €)
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
             @if(auth()->user()->rol === 'admin')
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="empresa_gestora_id" class="form-label">Empresa Gestora Asociada (Opcional)</label>
