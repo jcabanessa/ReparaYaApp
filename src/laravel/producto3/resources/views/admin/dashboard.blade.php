@@ -5,35 +5,10 @@
     <div class="page-header">
         <div>
             <h1 class="hero-title">Panel de <span>Administración</span></h1>
-            <p class="hero-subtitle">Bienvenido al sistema de control de ReparaYa.</p>
-        </div>
-        <div>
-            <a href="{{ route('admin.calendario') }}" class="btn-orange">Ver Calendario de Incidencias</a>
-        </div>
-    </div>
-
-    <div class="dashboard-grid">
-        <div class="dashboard-card">
-            <h3>Resumen del Sistema</h3>
-            <div class="info-row">
-                <span class="info-label">Total de Incidencias</span>
-                <span class="table-code">{{ $totalIncidencias }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Técnicos Registrados</span>
-                <span class="table-code">{{ $totalTecnicos }}</span>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection@extends('layouts.app')
-
-@section('content')
-<div class="home-container">
-    <div class="page-header">
-        <div>
-            <h1 class="hero-title">Panel de <span>Administración</span></h1>
             <p class="hero-subtitle">Gestión centralizada de avisos, filtrado por estados y asignación de técnicos.</p>
+        </div>
+        <div>
+            <a href="{{ route('incidencias.create') }}" class="btn-submit">+ Crear Aviso Manual</a>
         </div>
     </div>
 
@@ -49,7 +24,6 @@
         </div>
     @endif
 
-    <!-- Barra de Filtros por Estado -->
     <div class="filter-bar">
         <span class="filter-label">Filtrar por estado:</span>
         <a href="{{ route('admin.dashboard') }}" class="filter-link {{ empty($filtroEstado) ? 'active' : '' }}">Todos</a>
@@ -69,16 +43,19 @@
                     <thead>
                         <tr>
                             <th>Código</th>
+                            <th>Servicio</th>
                             <th>Urgencia</th>
                             <th>Fecha Cita</th>
                             <th>Estado</th>
                             <th>Técnico</th>
+                            <th class="action-cell">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($incidencias as $inc)
                             <tr>
                                 <td class="table-code">{{ $inc->localizador }}</td>
+                                <td>{{ $inc->especialidad->nombre ?? 'General' }}</td>
                                 <td class="table-urgency {{ strtolower($inc->tipo_urgencia) === 'urgente' ? 'urgente' : 'estandar' }}">
                                     {{ $inc->tipo_urgencia }}
                                 </td>
@@ -100,6 +77,34 @@
                                 </td>
                                 <td class="table-subtext">
                                     {{ $inc->tecnico->nombre ?? 'Sin asignar' }}
+                                </td>
+                                <td class="action-cell">
+                                    @if(in_array($inc->estado, ['Pendiente', 'Asignada']))
+                                        <div class="action-group">
+                                            <form action="{{ route('admin.incidencias.asignar', $inc->id) }}" method="POST" class="action-group">
+                                                @csrf
+                                                @method('PUT')
+                                                <select name="tecnico_id" required class="form-control btn-sm">
+                                                    <option value="">Técnico...</option>
+                                                    @foreach ($tecnicos as $tec)
+                                                        <option value="{{ $tec->id }}" {{ $inc->tecnico_id == $tec->id ? 'selected' : '' }}>
+                                                            {{ $tec->nombre }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <button type="submit" class="btn-submit btn-sm">Asignar</button>
+                                            </form>
+
+                                            <form action="{{ route('incidencias.estado', $inc->id) }}" method="POST" onsubmit="return confirm('¿Cancelar esta incidencia?');">
+                                                @csrf
+                                                @method('PUT')
+                                                <input type="hidden" name="estado" value="Cancelada">
+                                                <button type="submit" class="btn-danger" style="background: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer;">Cancelar</button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <span class="table-subtext">No modificable</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach

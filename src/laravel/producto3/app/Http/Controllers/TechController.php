@@ -15,7 +15,7 @@ class TechController extends Controller
         $tecnicoId = auth()->id();
         
         $incidencias = Incidencia::where('tecnico_id', $tecnicoId)
-            ->with(['comunidad', 'zona', 'cliente'])
+            ->with(['comunidad', 'cliente'])
             ->orderBy('fecha_servicio', 'asc')
             ->get();
 

@@ -60,6 +60,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/gestoras', [AdminController::class, 'gestoras'])->name('admin.gestoras');
     Route::post('/gestoras', [AdminController::class, 'storeGestora'])->name('admin.gestoras.store');
     Route::get('/calendario', [AdminController::class, 'calendario'])->name('admin.calendario');
+    Route::get('/liquidaciones', [AdminController::class, 'liquidaciones'])->name('admin.liquidaciones');
+    Route::get('/tecnicos-servicios', function() {
+        return view('admin.tecnicos_servicios');
+    })->name('admin.tecnicos.servicios');
+    
+    Route::post('/tecnicos', [AdminController::class, 'storeTecnico'])->name('admin.tecnicos.store');
+    Route::get('/comunidades', [AdminController::class, 'comunidades'])->name('admin.comunidades');
+    Route::post('/comunidades', [AdminController::class, 'storeComunidad'])->name('admin.comunidades.store');
+
+    Route::post('/especialidades', [AdminController::class, 'storeEspecialidad'])->name('admin.especialidades.store');
 });
 
 // 5. Espacios reservados para compañeros (Técnico / Cliente particular)

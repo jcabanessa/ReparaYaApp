@@ -37,7 +37,7 @@
                     <option value="">Selecciona una especialidad...</option>
                     @foreach($especialidades as $esp)
                         <option value="{{ $esp->id }}">
-                            {{ $esp->nombre }} (Precio Base: {{ number_format($esp->precio_base, 2) }} €)
+                            {{ $esp->nombre_especialidad }} (Precio Base: {{ number_format($esp->precio_base, 2) }} €)
                         </option>
                     @endforeach
                 </select>
@@ -48,7 +48,7 @@
                 <select name="comunidad_id" id="comunidad_id" class="form-control" required>
                     <option value="">Selecciona una comunidad...</option>
                     @foreach($comunidades as $comunidad)
-                        <option value="{{ $comunidad->id }}">{{ $comunidad->nombre }} - {{ $comunidad->direccion }}</option>
+                        <option value="{{ $comunidad->id }}">{{ $comunidad->nombre }} {{ $comunidad->zona }} - {{ $comunidad->direccion }}</option>
                     @endforeach
                 </select>
             </div>
@@ -74,7 +74,7 @@
                     <select name="empresa_gestora_id" id="empresa_gestora_id" class="form-control">
                         <option value="">Ninguna (Gestión Directa)</option>
                         @foreach($gestoras as $gestora)
-                            <option value="{{ $gestora->id }}">{{ $gestora->nombre_empresa }}</option>
+                            <option value="{{ $gestora->id }}">{{ $gestora->nombre }}</option>
                         @endforeach
                     </select>
                 </div>

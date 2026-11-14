@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Models\Comision;
 use App\Models\EmpresaGestora;
 use App\Models\Comunidad;
-use App\Models\Zona;
+use DateTime;
 use App\Models\Especialidad;
 
 class IncidenciaController extends Controller
@@ -33,58 +33,65 @@ class IncidenciaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'tipo_urgencia' => ['required', 'string'],
-            'fecha_servicio' => ['required', 'date'],
-            'direccion' => ['required', 'string', 'max:255'],
-            'descripcion' => ['required', 'string'],
-            'comunidad_id' => ['nullable', 'exists:comunidades,id'],
-            'zona_id' => ['nullable', 'exists:zonas,id'],
-            'especialidad_id' => ['nullable', 'exists:especialidades,id'],
-            'empresa_gestora_id' => ['nullable', 'exists:empresas_gestoras,id'],
+            'especialidad_id' => ['required', 'exists:especialidades,id'],
+            'tipo_urgencia'   => ['required', 'string'],
+            'fecha_solicitud' => ['required', 'date'],
+            'direccion'       => ['required', 'string', 'max:255'],
+            'descripcion'     => ['required', 'string'],
         ]);
 
-        $user = auth()->user();
-        $empresaGestoraId = $request->empresa_gestora_id;
+        $cliente_id     = auth()->id();
+        $tipo_urgencia  = $request->tipo_urgencia;
+        $fecha_servicio = $request->fecha_solicitud . ' 09:00:00';
+        $especialidad_id = $request->especialidad_id;
 
-        // Si la que crea la incidencia es una gestora, forzamos su ID y validamos su comunidad
-        if ($user->rol === 'gestora') {
-            $gestora = EmpresaGestora::where('usuario_id', $user->id)->first();
-            if ($gestora) {
-                $empresaGestoraId = $gestora->id;
-                
-                // Verificar que la comunidad pertenece a esta gestora
-                $comunidadValida = Comunidad::where('id', $request->comunidad_id)
-                    ->where('empresa_gestora_id', $gestora->id)
-                    ->exists();
+        $fechaActual = new DateTime();
+        $fechaCita   = new DateTime($fecha_servicio);
 
-                if (!$comunidadValida) {
-                    return back()->withInput()->withErrors(['error' => 'La comunidad seleccionada no pertenece a tu empresa gestora.']);
-                }
-            }
+        // Normalizamos el tipo de urgencia (quitando tildes y pasando a minúsculas)
+        $tipoMinuscula = strtolower(str_replace(['á', 'é', 'í', 'ó', 'ú'], ['a', 'e', 'i', 'o', 'u'], $tipo_urgencia));
+        $esEstandar = ($tipoMinuscula === 'estandar');
+
+        // Validaciones de fecha y antelación
+        if ($fechaCita < $fechaActual) {
+            return back()->with('error_incidencia', "La fecha de la cita no puede ser anterior a la actual.");
         }
-        // Generar localizador único
-        $localizador = 'INC-' . strtoupper(substr(uniqid(), -6));
 
-        Incidencia::create([
-            'localizador' => $localizador,
-            'cliente_id' => auth()->id(), // Si la crea el admin, se puede adaptar para permitir seleccionar cliente
-            'comunidad_id' => $request->comunidad_id,
-            'zona_id' => $request->zona_id,
-            'especialidad_id' => $request->especialidad_id,
-            'empresa_gestora_id' => $empresaGestoraId,
-            'tipo_urgencia' => $request->tipo_urgencia,
-            'fecha_servicio' => $request->fecha_servicio,
-            'direccion' => $request->direccion,
-            'descripcion' => $request->descripcion,
-            'estado' => 'Pendiente',
+        if ($esEstandar && ($fechaCita->getTimestamp() - $fechaActual->getTimestamp()) < (48 * 3600)) {
+            return back()->with('error_incidencia', "Error de validación: Las solicitudes estándar deben realizarse con un mínimo de 48 horas de antelación.");
+        }
+
+        // Obtenemos el precio base histórico de la especialidad
+        $especialidad = Especialidad::findOrFail($especialidad_id);
+        $precioBaseAplicado = $especialidad->precio_base ?? 0.00;
+
+        $localizador = 'INC-' . strtoupper(substr(uniqid(), -6));
+        $estado_inicial = 'Pendiente';
+
+        // Creamos la incidencia
+        $incidencia = Incidencia::create([
+            'localizador'      => $localizador,
+            'cliente_id'       => $cliente_id,
+            'especialidad_id'  => $especialidad_id,
+            'empresa_gestora_id' => $request->empresa_gestora_id, // Vinculada a la gestora si aplica
+            'descripcion'      => $request->descripcion,
+            'direccion'        => $request->direccion,
+            'fecha_servicio'   => $fecha_servicio,
+            'tipo_urgencia'    => $tipo_urgencia,
+            'estado'           => $estado_inicial,
+            'precio_aplicado'  => $precioBaseAplicado,
         ]);
 
-        $redirectRoute = match($user->rol) {
-            'admin' => 'admin.dashboard',
-            'gestora' => 'gestora.dashboard',
-            default => 'cliente.avisos'
-        };
-        return redirect()->route($redirectRoute)->with('success', 'Incidencia creada correctamente con localizador: ' . $localizador);
+        // Registrar en historial si tienes la función implementada
+        if (function_exists('registrarHistorial')) {
+            registrarHistorial(app('db')->getPdo(), $incidencia->id, 'Ninguno', 'Pendiente', $cliente_id, 'Aviso registrado.');
+        }
+
+        session(['exito_incidencia' => "¡Aviso creado con éxito! Localizador asignado: " . $localizador]);
+
+        return auth()->user()->rol === 'admin' 
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('cliente.avisos');
     }
 
     // Asignar técnico (Admin)
@@ -127,6 +134,7 @@ class IncidenciaController extends Controller
                     'incidencia_id' => $incidencia->id,
                     'importe' => $importeComision,
                     'estado' => 'Pendiente',
+                    'updated_at' => now(),
                 ]);
             }
         }

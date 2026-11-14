@@ -24,6 +24,9 @@
                 @if(auth()->user()->rol === 'admin')
                     <li><a href="{{ route('admin.dashboard') }}" class="nav-link">Panel Admin</a></li>
                     <li><a href="{{ route('admin.gestoras') }}" class="nav-link">Empresas Gestoras</a></li>
+                    <li><a href="{{ route('admin.comunidades') }}" class="nav-link">Comunidades</a></li>
+                    <li><a href="{{ route('admin.tecnicos.servicios') }}" class="nav-link">Técnicos y Servicios</a></li>
+                    <li><a href="{{ route('admin.liquidaciones') }}" class="nav-link">Liquidaciones</a></li>
                     <li><a href="{{ route('admin.calendario') }}" class="nav-link">Calendario</a></li>
                 @elseif(auth()->user()->rol === 'gestora')
                     <li><a href="{{ route('gestora.dashboard') }}" class="nav-link">Panel Gestora</a></li>

@@ -16,7 +16,6 @@ class Incidencia extends Model
         'cliente_id',
         'tecnico_id',
         'comunidad_id',
-        'zona_id',
         'especialidad_id',
         'empresa_gestora_id',
         'tipo_urgencia',
@@ -43,12 +42,6 @@ class Incidencia extends Model
     public function comunidad()
     {
         return $this->belongsTo(Comunidad::class, 'comunidad_id');
-    }
-
-    // Relación: Pertenece a una zona
-    public function zona()
-    {
-        return $this->belongsTo(Zona::class, 'zona_id');
     }
 
     // Relación: Tiene una comisión asociada (si aplica)

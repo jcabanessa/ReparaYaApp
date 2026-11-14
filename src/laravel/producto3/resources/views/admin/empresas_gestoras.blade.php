@@ -34,7 +34,7 @@
             <div class="form-grid-2">
                 <div class="form-group">
                     <label class="form-label highlight">Nombre de la Empresa</label>
-                    <input type="text" name="nombre_empresa" required class="form-control" placeholder="Ej. Gestiones S.L." value="{{ old('nombre_empresa') }}">
+                    <input type="text" name="nombre" required class="form-control" placeholder="Ej. Gestiones S.L." value="{{ old('nombre') }}">
                 </div>
                 <div class="form-group">
                     <label class="form-label highlight">CIF de la Empresa</label>
@@ -98,7 +98,7 @@
                     <tbody>
                         @foreach ($empresas as $emp)
                             <tr>
-                                <td class="table-code">{{ $emp->nombre_empresa }}</td>
+                                <td class="table-code">{{ $emp->nombre }}</td>
                                 <td>{{ $emp->cif }}</td>
                                 <td><strong style="color: #ff6600;">{{ number_format($emp->porcentaje_comision, 2) }}%</strong></td>
                                 <td>{{ $emp->usuario->nombre ?? 'N/A' }}</td>

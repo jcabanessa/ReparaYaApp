@@ -8,6 +8,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Models\EmpresaGestora;
+use App\Models\Zona;
+use App\Models\Comunidad;
+use App\Models\Tecnico;
+use App\Models\Especialidad;
 
 class AdminController extends Controller
 {
@@ -17,7 +21,7 @@ class AdminController extends Controller
         $filtroEstado = $request->query('estado');
 
         // Consultar incidencias con relaciones de Eloquent
-        $query = Incidencia::with(['cliente', 'tecnico', 'comunidad', 'zona']);
+        $query = Incidencia::with(['cliente', 'tecnico', 'comunidad', 'especialidad', 'empresaGestora']);
 
         if (!empty($filtroEstado)) {
             $query->where('estado', $filtroEstado);
@@ -28,36 +32,35 @@ class AdminController extends Controller
         // Obtener la lista de usuarios con rol 'tecnico' para los desplegables de asignación
         $tecnicos = User::where('rol', 'tecnico')->get();
 
-        $totalIncidencias = $incidencias->count();
-        $totalTecnicos = $tecnicos->count();
-
-        return view('admin.dashboard', compact('incidencias', 'tecnicos', 'filtroEstado', 'totalIncidencias', 'totalTecnicos'));
+        return view('admin.dashboard', compact('incidencias', 'tecnicos', 'filtroEstado'));
     }
 
     // Mostrar calendario con filtrado temporal y relaciones
     public function calendario(Request $request)
     {
-        $vista = $request->input('vista', 'mensual');
+        $filtro = $request->query('filtro', 'todos');
+        $query = Incidencia::with(['cliente', 'tecnico', 'especialidad', 'comunidad']);
 
-        $query = Incidencia::with(['cliente', 'tecnico', 'comunidad', 'zona']);
-
-        if ($vista === 'diaria') {
-            $query->whereDate('fecha_servicio', now()->toDateString());
-        } elseif ($vista === 'semanal') {
-            $query->whereBetween('fecha_servicio', [now()->startOfWeek(), now()->endOfWeek()]);
-        } else {
-            $query->whereMonth('fecha_servicio', now()->month)
-                  ->whereYear('fecha_servicio', now()->year);
+        switch ($filtro) {
+            case 'mensual':
+                $query->whereMonth('fecha_servicio', now()->month)
+                    ->whereYear('fecha_servicio', now()->year);
+                break;
+            case 'semanal':
+                $query->whereBetween('fecha_servicio', [now()->startOfWeek(), now()->endOfWeek()]);
+                break;
+            case 'diaria':
+                $query->whereDate('fecha_servicio', today());
+                break;
+            default:
+                // 'todos' o cualquier otro valor
+                break;
         }
 
         $incidencias = $query->orderBy('fecha_servicio', 'asc')->get();
-        
-        // Obtener técnicos disponibles para los desplegables de asignación
-        $tecnicos = User::where('rol', 'tecnico')->get();
 
-        return view('admin.calendario', compact('incidencias', 'vista', 'tecnicos'));
+        return view('admin.calendario', compact('incidencias', 'filtro'));
     }
-
     // Asignar un técnico a una incidencia
     public function asignarTecnico(Request $request)
     {
@@ -123,4 +126,123 @@ class AdminController extends Controller
             return back()->withInput()->withErrors(['error' => 'Error al registrar la empresa gestora: ' . $e->getMessage()]);
         }
     }
+
+    // Guardar nueva especialidad / tipo de servicio
+    public function storeEspecialidad(Request $request)
+    {
+        $request->validate([
+            'nombre' => ['required', 'string', 'max:100'],
+            'precio_base' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        Especialidad::create([
+            'nombre_especialidad' => $request->nombre,
+            'precio_base' => $request->precio_base,
+        ]);
+
+        return back()->with('success', 'Especialidad creada correctamente.');
+    }
+
+    public function liquidaciones()
+    {
+        // Cargar empresas gestoras con sus comisiones, incidencias, especialidades y comunidades
+        $gestoras = EmpresaGestora::with([
+            'comisiones.incidencia.especialidad', 
+            'comisiones.incidencia.comunidad'
+        ])->get();
+
+        return view('admin.liquidaciones', compact('gestoras'));
+    }
+
+
+    // ==================== GESTIÓN DE COMUNIDADES ====================
+    public function comunidades()
+    {
+        $comunidades = Comunidad::with(['empresaGestora'])->get();
+        $gestoras = EmpresaGestora::all();
+        return view('admin.comunidades', compact('comunidades', 'gestoras'));
+    }
+
+    public function storeComunidad(Request $request)
+    {
+        $request->validate([
+            'nombre'             => ['required', 'string', 'max:150'],
+            'direccion'          => ['required', 'string', 'max:255'],
+            'zona'            => ['required', 'string', 'max:150'],
+            'empresa_gestora_id' => ['nullable', 'exists:empresas_gestoras,id'],
+        ]);
+
+        Comunidad::create($request->all());
+
+        return back()->with('success', 'Comunidad registrada y vinculada correctamente.');
+    }
+
+        // Listado en el panel maestro
+    public function tecnicosServicios()
+    {
+        $tecnicos = Tecnico::with(['usuario', 'especialidad'])->get();
+        $especialidades = Especialidad::all();
+        return view('admin.tecnicos_servicios', compact('tecnicos', 'especialidades'));
+    }
+
+    // Alta de técnico (Transacción: usuarios + laravel_tecnico)
+    public function storeTecnico(Request $request)
+    {
+        $request->validate([
+            'nombre'          => ['required', 'string', 'max:100'],
+            'email'           => ['required', 'string', 'email', 'max:255', 'unique:usuarios,email'],
+            'password'        => ['required', 'string', 'min:6'],
+            'especialidad_id' => ['required', 'exists:especialidades,id'],
+            'telefono'        => ['nullable', 'string', 'max:20'],
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // 1. Creamos el usuario con rol 'tecnico'
+            $user = User::create([
+                'nombre'   => $request->nombre,
+                'email'    => $request->email,
+                'password' => Hash::make($request->password),
+                'rol'      => 'tecnico',
+                'telefono' => $request->telefono,
+            ]);
+
+            // 2. Creamos el registro en laravel_tecnico
+            Tecnico::create([
+                'usuario_id'      => $user->id,
+                'nombre_completo' => $request->nombre,
+                'especialidad_id' => $request->especialidad_id,
+                'disponible'      => 1,
+            ]);
+
+            DB::commit();
+            return back()->with('success', "¡Técnico registrado correctamente en el sistema!");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "Error al crear el técnico: " . $e->getMessage());
+        }
+    }
+
+    // Baja de técnico (Eliminación en cascada segura)
+    public function destroyTecnico($id)
+    {
+        DB::beginTransaction();
+        try {
+            $tecnico = Tecnico::findOrFail($id);
+            
+            // Borramos el usuario asociado si existe
+            if ($tecnico->usuario_id) {
+                User::where('id', $tecnico->usuario_id)->delete();
+            }
+
+            $tecnico->delete();
+
+            DB::commit();
+            return back()->with('success', "Técnico eliminado completamente de la plantilla.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', "No se puede eliminar el técnico (posiblemente tenga incidencias asociadas en el historial).");
+        }
+    }
+
 }

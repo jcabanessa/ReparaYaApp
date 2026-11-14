@@ -37,9 +37,8 @@ class GestoraController extends Controller
 
         // Solo se muestran las comunidades asignadas a esta gestora
         $comunidades = Comunidad::where('empresa_gestora_id', $gestora->id)->get();
-        $zonas = \App\Models\Zona::all();
 
-        return view('gestora.crear_incidencia', compact('comunidades', 'zonas', 'gestora'));
+        return view('gestora.crear_incidencia', compact('comunidades', 'gestora'));
     }
 
     // Procesar la creación de la incidencia por parte de la gestora
@@ -71,7 +70,6 @@ class GestoraController extends Controller
             'localizador' => $localizador,
             'cliente_id' => $usuario->id, // O el vecino si se registra
             'comunidad_id' => $request->comunidad_id,
-            'zona_id' => $request->comunidad->zona_id ?? null,
             'empresa_gestora_id' => $gestora->id, // Vinculada a la gestora
             'tipo_urgencia' => $request->tipo_urgencia,
             'fecha_servicio' => $request->fecha_servicio,
