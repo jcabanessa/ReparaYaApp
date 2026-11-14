@@ -27,10 +27,13 @@
                     <li><a href="{{ route('admin.calendario') }}" class="nav-link">Calendario</a></li>
                 @elseif(auth()->user()->rol === 'gestora')
                     <li><a href="{{ route('gestora.dashboard') }}" class="nav-link">Panel Gestora</a></li>
+                    <li><a href="{{ route('incidencias.create') }}" class="btn-orange">Nueva Incidencia</a></li>
                 @elseif(auth()->user()->rol === 'tecnico')
                     <li><a href="{{ route('tecnico.agenda') }}" class="nav-link">Mi Agenda</a></li>
+                    <li><a href="{{ route('tecnico.calendario') }}" class="nav-link">Mi Calendario</a></li>
                 @elseif(auth()->user()->rol === 'particular')
                     <li><a href="{{ route('cliente.avisos') }}" class="nav-link">Mis Avisos</a></li>
+                    <li><a href="{{ route('incidencias.create') }}" class="btn-orange">Nueva Solicitud</a></li>
                 @endif
 
                 <li><a href="{{ route('perfil') }}" class="nav-link">Mi Perfil</a></li>
