@@ -59,13 +59,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/gestoras', [AdminController::class, 'gestoras'])->name('admin.gestoras');
     Route::post('/gestoras', [AdminController::class, 'storeGestora'])->name('admin.gestoras.store');
-    Route::get('/calendario', [AdminController::class, 'calendario'])->name('admin.calendario');
+    Route::get('/calendario/{filtro?}', [AdminController::class, 'calendario'])
+    ->name('admin.calendario')
+    ->defaults('filtro', 'todos');
     Route::get('/liquidaciones', [AdminController::class, 'liquidaciones'])->name('admin.liquidaciones');
     Route::get('/tecnicos-servicios', function() {
         return view('admin.tecnicos_servicios');
     })->name('admin.tecnicos.servicios');
     
     Route::post('/tecnicos', [AdminController::class, 'storeTecnico'])->name('admin.tecnicos.store');
+    Route::delete('/tecnicos/{tecnico}', [AdminController::class, 'destroyTecnico'])->name('admin.tecnicos.destroy');
     Route::get('/comunidades', [AdminController::class, 'comunidades'])->name('admin.comunidades');
     Route::post('/comunidades', [AdminController::class, 'storeComunidad'])->name('admin.comunidades.store');
 

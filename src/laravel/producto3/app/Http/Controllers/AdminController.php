@@ -36,9 +36,8 @@ class AdminController extends Controller
     }
 
     // Mostrar calendario con filtrado temporal y relaciones
-    public function calendario(Request $request)
+    public function calendario(Request $request, $filtro = 'todos')
     {
-        $filtro = $request->query('filtro', 'todos');
         $query = Incidencia::with(['cliente', 'tecnico', 'especialidad', 'comunidad']);
 
         switch ($filtro) {

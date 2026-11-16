@@ -5,10 +5,10 @@
     <h1 class="hero-title">Calendario de <span>Intervenciones</span></h1>
     <p class="hero-subtitle">Vista temporal diferenciada por colores (Urgente vs Estándar) y distintivos explícitos de estado.</p>
     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <a href="{{ route('admin.calendario', ['filtro' => 'todos']) }}" class="filter-link {{ request('filtro', 'todos') === 'todos' ? 'active' : '' }}">Todos</a>
-        <a href="{{ route('admin.calendario', ['filtro' => 'mensual']) }}" class="filter-link {{ request('filtro') === 'mensual' ? 'active' : '' }}">Mensual</a>
-        <a href="{{ route('admin.calendario', ['filtro' => 'semanal']) }}" class="filter-link {{ request('filtro') === 'semanal' ? 'active' : '' }}">Semanal</a>
-        <a href="{{ route('admin.calendario', ['filtro' => 'diaria']) }}" class="filter-link {{ request('filtro') === 'diaria' ? 'active' : '' }}">Diaria</a>
+        <a href="{{ route('admin.calendario', ['filtro' => 'todos']) }}" class="filter-link {{ $filtro === 'todos' ? 'active' : '' }}">Todos</a>
+        <a href="{{ route('admin.calendario', ['filtro' => 'mensual']) }}" class="filter-link {{ $filtro === 'mensual' ? 'active' : '' }}">Mensual</a>
+        <a href="{{ route('admin.calendario', ['filtro' => 'semanal']) }}" class="filter-link {{ $filtro === 'semanal' ? 'active' : '' }}">Semanal</a>
+        <a href="{{ route('admin.calendario', ['filtro' => 'diaria']) }}" class="filter-link {{ $filtro === 'diaria' ? 'active' : '' }}">Diaria</a>
     </div>
 
     <div style="display: flex; gap: 20px; margin-bottom: 25px; background: #141414; padding: 15px; border-radius: 8px; border: 1px solid #2a2a2a;">
@@ -24,10 +24,6 @@
 
     <div class="dashboard-card">
         <h3>Programación de Citas</h3>
-        @php
-            $incidencias = App\Models\Incidencia::with(['cliente', 'tecnico', 'especialidad'])->orderBy('fecha_servicio', 'asc')->get();
-        @endphp
-
         @if($incidencias->isEmpty())
             <p style="color: #9ca3af; padding: 15px 0;">No hay servicios registrados en el calendario.</p>
         @else

@@ -28,6 +28,17 @@
                 <div class="form-group">
                     <input type="password" name="password" placeholder="Contraseña de acceso" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
                 </div>
+                <div class="form-group">
+                    <select name="especialidad_id" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
+                        <option value="" disabled selected>Selecciona Especialidad</option>
+                        @php 
+                            $especialidades = App\Models\Especialidad::all(); 
+                        @endphp
+                        @foreach ($especialidades as $esp)
+                            <option value="{{ $esp->id }}">{{ $esp->nombre_especialidad }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <button type="submit" style="background: #ff6600; color: #fff; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; width: 100%;">+ Dar de Alta Técnico</button>
             </form>
 
@@ -51,7 +62,7 @@
                             <tr style="border-bottom: 1px solid #1a1a1a;">
                                 <td style="padding: 8px; color: #fff;">{{ $tec->nombre_completo }}</td>
                                 <td style="padding: 8px; color: #9ca3af;">{{ $tec->usuario->email ?? 'N/A' }}</td>
-                                <td style="padding: 8px; color: #38bdf8;">{{ $tec->especialidad->nombre ?? 'Sin especialidad' }}</td>
+                                <td style="padding: 8px; color: #38bdf8;">{{ $tec->especialidad->nombre_especialidad ?? 'Sin especialidad' }}</td>
                                 <td style="padding: 8px; text-align: center;">
                                     <form action="{{ route('admin.tecnicos.destroy', $tec->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de dar de baja a este técnico?');">
                                         @csrf
@@ -88,13 +99,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $especialidades = App\Models\Especialidad::all(); @endphp
+                    @php 
+                        $especialidades = App\Models\Especialidad::all(); 
+                    @endphp
                     @if($especialidades->isEmpty())
                         <tr><td colspan="2" style="padding: 10px; color: #9ca3af;">No hay servicios configurados.</td></tr>
                     @else
                         @foreach ($especialidades as $esp)
                             <tr style="border-bottom: 1px solid #1a1a1a;">
-                                <td style="padding: 8px; color: #fff;">{{ $esp->nombre }}</td>
+                                <td style="padding: 8px; color: #fff;">{{ $esp->nombre_especialidad }}</td>
                                 <td style="padding: 8px; color: #10b981; font-weight: bold; text-align: right;">
                                     {{ number_format($esp->precio_base, 2) }} €
                                 </td>

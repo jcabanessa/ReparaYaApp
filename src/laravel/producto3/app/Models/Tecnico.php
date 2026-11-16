@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tecnico extends Model
 {
-    protected $table = 'laravel_tecnicos';
+    protected $table = 'tecnicos';
     public $timestamps = false; // Cambiar a true si tu tabla tiene created_at/updated_at
 
     protected $fillable = [
