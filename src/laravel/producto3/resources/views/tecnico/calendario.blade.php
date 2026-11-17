@@ -8,14 +8,17 @@
             <p class="hero-subtitle">Tus servicios asignados organizados por fecha.</p>
         </div>
     </div>
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <a href="{{ route('tecnico.calendario', ['filtro' => 'todos']) }}" class="filter-link {{ $filtro === 'todos' ? 'active' : '' }}">Todos</a>
+        <a href="{{ route('tecnico.calendario', ['filtro' => 'mensual']) }}" class="filter-link {{ $filtro === 'mensual' ? 'active' : '' }}">Mensual</a>
+        <a href="{{ route('tecnico.calendario', ['filtro' => 'semanal']) }}" class="filter-link {{ $filtro === 'semanal' ? 'active' : '' }}">Semanal</a>
+        <a href="{{ route('tecnico.calendario', ['filtro' => 'diaria']) }}" class="filter-link {{ $filtro === 'diaria' ? 'active' : '' }}">Diaria</a>
+    </div>
 
     <div class="dashboard-card">
         <h3>Próximos Trabajos Programados</h3>
-        @php
-            $misCitas = App\Models\Incidencia::where('tecnico_id', auth()->id())->orderBy('fecha_servicio', 'asc')->get();
-        @endphp
 
-        @if($misCitas->isEmpty())
+        @if($incidencias->isEmpty())
             <p class="text-empty" style="margin-top: 15px;">No tienes intervenciones agendadas en tu calendario.</p>
         @else
             <div class="table-responsive" style="margin-top: 20px;">
@@ -30,19 +33,19 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($misCitas as $cita)
+                        @foreach ($incidencias as $incidencia)
                             <tr>
                                 <td class="table-date" style="font-weight: bold; color: #ff6600;">
-                                    {{ date('d/m/Y H:i', strtotime($cita->fecha_servicio)) }}
+                                    {{ date('d/m/Y H:i', strtotime($incidencia->fecha_servicio)) }}
                                 </td>
-                                <td class="table-code">{{ $cita->localizador }}</td>
-                                <td>{{ $cita->direccion }}</td>
-                                <td class="table-urgency {{ strtolower($cita->tipo_urgencia) === 'urgente' ? 'urgente' : 'estandar' }}">
-                                    {{ $cita->tipo_urgencia }}
+                                <td class="table-code">{{ $incidencia->localizador }}</td>
+                                <td>{{ $incidencia->direccion }}</td>
+                                <td class="table-urgency {{ strtolower($incidencia->tipo_urgencia) === 'urgente' ? 'urgente' : 'estandar' }}">
+                                    {{ $incidencia->tipo_urgencia }}
                                 </td>
                                 <td>
-                                    <span class="badge-status badge-{{ strtolower(str_replace(' ', '', $cita->estado)) }}">
-                                        {{ $cita->estado }}
+                                    <span class="badge-status badge-{{ strtolower(str_replace(' ', '', $incidencia->estado)) }}">
+                                        {{ $incidencia->estado }}
                                     </span>
                                 </td>
                             </tr>

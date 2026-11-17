@@ -39,6 +39,10 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/', function () {
+    return view('home');
+})->name('inicio');
+
 // 2. Rutas públicas de Autenticación y Registro
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
@@ -80,6 +84,7 @@ Route::middleware(['auth', 'role:tecnico'])->group(function () {
     Route::get('/tecnico/agenda', function () {
         return view('tecnico.agenda');
     })->name('tecnico.agenda');
+    Route::get('/tecnico/calendario/{filtro?}', [TechController::class, 'calendario'])->name('tecnico.calendario');
 });
 
 Route::middleware(['auth', 'role:particular'])->group(function () {

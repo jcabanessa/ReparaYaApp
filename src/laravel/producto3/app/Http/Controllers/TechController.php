@@ -60,4 +60,30 @@ class TechController extends Controller
 
         return redirect()->back()->with('success', 'Estado actualizado correctamente.');
     }
+
+    public function calendario($filtro = 'todos')
+    {
+        $tecnicoId = auth()->id();
+        $query = Incidencia::where('tecnico_id', $tecnicoId);
+
+        switch ($filtro) {
+            case 'mensual':
+                $query->whereMonth('fecha_servicio', now()->month);
+                break;
+            case 'semanal':
+                $query->whereBetween('fecha_servicio', [now()->startOfWeek(), now()->endOfWeek()]);
+                break;
+            case 'diaria':
+                $query->whereDate('fecha_servicio', now());
+                break;
+            case 'todos':
+            default:
+                // No se aplica ningún filtro adicional
+                break;
+        }
+
+        $incidencias = $query->orderBy('fecha_servicio', 'asc')->get();
+
+        return view('tecnico.calendario', compact('incidencias', 'filtro'));
+    }
 }

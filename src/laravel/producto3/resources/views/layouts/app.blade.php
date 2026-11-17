@@ -16,8 +16,13 @@
         <div class="logo">
             <a href="{{ url('/') }}">ReparaYaApp</a>
         </div>
+        <div class="login">
+            @auth
+                <span>Bienvenido, {{ auth()->user()->nombre }}, {{ auth()->user()->rol }}!</span>
+            @endauth
+        </div>
         <ul class="nav-list">
-            <li><a href="{{ url('/') }}" class="nav-link">Inicio</a></li>
+            <li><a href="{{ route('inicio') }}" class="nav-link">Inicio</a></li>
 
             @auth
                 {{-- Menú específico según el rol del usuario autenticado --}}

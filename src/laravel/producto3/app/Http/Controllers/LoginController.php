@@ -29,11 +29,11 @@ class LoginController extends Controller
             if ($user->rol === 'admin') {
                 return redirect()->route('admin.dashboard');
             } elseif ($user->rol === 'tecnico') {
-                return redirect()->route('tecnico.panel');
+                return redirect()->route('tecnico.agenda');
             } elseif ($user->rol === 'gestora') {
                 return redirect()->route('gestora.dashboard');
             } else {
-                return redirect()->route('cliente.dashboard');
+                return redirect()->route('cliente.avisos');
             }
         }
 

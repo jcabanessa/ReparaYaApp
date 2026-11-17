@@ -35,7 +35,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                 <div class="form-group">
                     <label for="zona" class="form-label">Zona de la Comunidad *</label>
-                    <input type="text" name="zona" id="zona" class="form-control" placeholder="Ej: Jardín, Terrado, Sótano..." required>
+                    <input type="text" name="zona" id="zona" class="form-control" placeholder="Ej: Norte, Sur, Este, Oeste" required>
                 </div>
                 <div class="form-group">
                     <label for="empresa_gestora_id" class="form-label">Empresa Gestora Asignada (Opcional)</label>
