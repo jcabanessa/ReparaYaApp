@@ -127,17 +127,17 @@
                                 @foreach ($comisionesMes as $com)
                                     <tr>
                                         <td class="table-code">{{ $com->incidencia->localizador ?? 'N/A' }}</td>
-                                        <td class="table-date">{{ $com->updated_at ? $com->updated_at->format('d/m/Y H:i') : 'N/A' }}</td>
-                                        <td>
-                                            {{ $com->incidencia->comunidad->nombre ?? 'N/A' }}
+                                        <td class="table-date"> {{ $com->incidencia->comunidad->nombre ?? 'N/A' }}
                                             @if($com->incidencia?->comunidad?->zona)
                                                 <small style="color: #38bdf8;">({{ $com->incidencia->comunidad->zona }})</small>
-                                            @endif
+                                            @endif</td>
+                                        <td>
+                                           {{ $com->incidencia->especialidad->nombre_especialidad ?? 'N/A' }}
                                         </td>
-                                        <td>{{ $com->incidencia->especialidad->nombre ?? 'N/A' }}</td>
                                         <td>{{ number_format($com->incidencia->especialidad->precio_base ?? 0, 2) }} €</td>
                                         <td>{{ number_format($gestora->porcentaje_comision, 2) }}%</td>
-                                        <td><strong style="color: #ff6600;">{{ number_format($com->importe, 2) }} €</strong></td>
+                                        <td>{{ number_format($com->importe, 2) }}</td>
+                                        <td><strong style="color: #ff6600;"> {{ $com->updated_at ? $com->updated_at->format('d/m/Y H:i') : 'N/A' }}</strong></td>
                                     </tr>
                                 @endforeach
                             </tbody>

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\EmpresaGestora;
 use App\Models\Incidencia;
 use App\Models\Comunidad;
+use App\Models\Comision;
+use Carbon\Carbon;
 
 class GestoraController extends Controller
 {
@@ -18,15 +20,30 @@ class GestoraController extends Controller
         $gestora = EmpresaGestora::where('usuario_id', $usuario->id)->first();
 
         if (!$gestora) {
-            abort(403, 'No hay ninguna empresa gestora asociada a este usuario.');
+            return redirect()->route('inicio')->with('error', 'No tienes ninguna empresa gestora asociada.');
         }
 
         // Consultas estrictamente limitadas a las comunidades e incidencias de esta gestora
         $comunidades = Comunidad::where('empresa_gestora_id', $gestora->id)->get();
-        $incidencias = Incidencia::where('empresa_gestora_id', $gestora->id)->orderBy('fecha_servicio', 'desc')->get();
-        $comisones = $gestora->comisiones()->with('incidencia')->get();
+        // Incidencias de sus comunidades
+        $incidencias = Incidencia::with(['comunidad', 'especialidad'])
+            ->where('empresa_gestora_id', $gestora->id)
+            ->orderBy('fecha_servicio', 'desc')
+            ->get();
 
-        return view('gestora.dashboard', compact('gestora', 'comunidades', 'incidencias', 'comisones'));
+        // Comisiones de la gestora agrupadas por mes
+        $comisiones = Comision::with(['incidencia.comunidad', 'incidencia.especialidad'])
+            ->where('empresa_gestora_id', $gestora->id)
+            ->get();
+
+        // Agrupamos las comisiones por periodo mensual (ej: "Noviembre 2026")
+        $comisionesPorMes = $comisiones->groupBy(function($comision) {
+            $fecha = $comision->fecha_finalizacion ?? $comision->created_at;
+            return $fecha ? Carbon::parse($fecha)->translatedFormat('F Y') : 'Sin fecha';
+        });
+        
+
+        return view('gestora.dashboard', compact('gestora', 'comunidades', 'incidencias', 'comisiones', 'comisionesPorMes'));
     }
 
     // Formulario para que la gestora cree una incidencia en nombre de un vecino de sus comunidades
