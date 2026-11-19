@@ -158,25 +158,45 @@ class IncidenciaController extends Controller
         ]);
 
         $incidencia = Incidencia::with('especialidad')->findOrFail($id);
+    
+        // 1. Guardamos el estado anterior antes de modificarlo
         $estadoAnterior = $incidencia->estado;
-        $incidencia->estado = $request->estado;
-        $incidencia->save();
+        $nuevoEstado = $request->estado;
 
-        // Si la incidencia pasa a 'Finalizada' y tiene una empresa gestora asociada, generamos la comisión automáticamente
-        if ($request->estado === 'Finalizada' && $estadoAnterior !== 'Finalizada' && $incidencia->empresa_gestora_id) {
-            $gestora = EmpresaGestora::find($incidencia->empresa_gestora_id);
-            if ($gestora && $gestora->porcentaje_comision > 0 && $incidencia->especialidad) {
-                $precio_base = (float) $incidencia->especialidad->precio_base; 
-                $importeComision = round(($precio_base * $gestora->porcentaje_comision) / 100, 2);
+        // Solo registramos si realmente hay un cambio de estado
+        if ($estadoAnterior !== $nuevoEstado) {
+            $incidencia->estado = $nuevoEstado;
+            $incidencia->save();
 
-                Comision::create([
-                    'empresa_gestora_id' => $gestora->id,
-                    'incidencia_id' => $incidencia->id,
-                    'importe' => $importeComision,
-                    'estado' => 'Pendiente',
-                    'updated_at' => now(),
-                ]);
+            // 2. Llamada a la función global registrarHistorial con los parámetros correctos
+            if (function_exists('registrarHistorial')) {
+                registrarHistorial(
+                    app('db')->getPdo(), 
+                    $incidencia->id, 
+                    $estadoAnterior, 
+                    $nuevoEstado, 
+                    auth()->id(), 
+                    "Estado actualizado de '{$estadoAnterior}' a '{$nuevoEstado}'."
+                );
             }
+
+            // Si la incidencia pasa a 'Finalizada' y tiene una empresa gestora asociada, generamos la comisión automáticamente
+            if ($request->estado === 'Finalizada' && $estadoAnterior !== 'Finalizada' && $incidencia->empresa_gestora_id) {
+                $gestora = EmpresaGestora::find($incidencia->empresa_gestora_id);
+                if ($gestora && $gestora->porcentaje_comision > 0 && $incidencia->especialidad) {
+                    $precio_base = (float) $incidencia->especialidad->precio_base; 
+                    $importeComision = round(($precio_base * $gestora->porcentaje_comision) / 100, 2);
+
+                    Comision::create([
+                        'empresa_gestora_id' => $gestora->id,
+                        'incidencia_id' => $incidencia->id,
+                        'importe' => $importeComision,
+                        'estado' => 'Pendiente',
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        
         }
 
         return back()->with('success', 'Estado de la incidencia actualizado correctamente.');

@@ -8,6 +8,7 @@ use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\GestoraController;
 use App\Http\Controllers\IncidenciaController;
+use Illuminate\Support\Facades\DB;
 
 /*Route::get('/', function () {
     return response()->json([
@@ -113,3 +114,21 @@ Route::middleware(['auth'])->group(function () {
     // Asignación de técnico desde administración
     Route::put('/admin/incidencias/{id}/asignar', [IncidenciaController::class, 'asignarTecnico'])->name('admin.incidencias.asignar');
 });
+
+// Función global de historial disponible en toda la aplicación
+if (!function_exists('registrarHistorial')) {
+    function registrarHistorial($db, $incidencia_id, $estado_anterior, $nuevo_estado, $usuario_id, $observaciones = null) {
+        try {
+            DB::table('historial_estados')->insert([
+                'incidencia_id'   => $incidencia_id,
+                'estado_anterior' => $estado_anterior,
+                'nuevo_estado'    => $nuevo_estado,
+                'usuario_id'      => $usuario_id,
+                'observaciones'   => $observaciones,
+                'created_at'      => now(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error("Error al registrar historial: " . $e->getMessage());
+        }
+    }
+}

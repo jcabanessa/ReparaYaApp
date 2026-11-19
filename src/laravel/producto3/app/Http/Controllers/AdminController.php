@@ -70,6 +70,7 @@ class AdminController extends Controller
 
         $incidencia = Incidencia::findOrFail($request->incidencia_id);
         $incidencia->tecnico_id = $request->tecnico_id;
+        $incidencia->Incidencia::with(['cliente','tecnico.especialidad','especialidad'])->get();
         $incidencia->estado = 'Asignada';
         $incidencia->save();
 

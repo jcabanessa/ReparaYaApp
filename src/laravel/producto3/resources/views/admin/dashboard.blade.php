@@ -55,7 +55,7 @@
                         @foreach ($incidencias as $inc)
                             <tr>
                                 <td class="table-code">{{ $inc->localizador }}</td>
-                                <td>{{ $inc->especialidad->nombre ?? 'General' }}</td>
+                                <td>{{ $inc->especialidad->nombre_especialidad ?? 'General' }}</td>
                                 <td class="table-urgency {{ strtolower($inc->tipo_urgencia) === 'urgente' ? 'urgente' : 'estandar' }}">
                                     {{ $inc->tipo_urgencia }}
                                 </td>
@@ -76,7 +76,7 @@
                                     </span>
                                 </td>
                                 <td class="table-subtext">
-                                    {{ $inc->tecnico->nombre ?? 'Sin asignar' }}
+                                    {{ $inc->tecnico->nombre ?? 'Sin asignar' }} - {{ $inc->tecnico->especialidad->nombre_especialidad ?? 'General' }}
                                 </td>
                                 <td class="action-cell">
                                     @if(in_array($inc->estado, ['Pendiente', 'Asignada']))
@@ -88,7 +88,7 @@
                                                     <option value="">Técnico...</option>
                                                     @foreach ($tecnicos as $tec)
                                                         <option value="{{ $tec->id }}" {{ $inc->tecnico_id == $tec->id ? 'selected' : '' }}>
-                                                            {{ $tec->nombre }}
+                                                            {{ $tec->nombre }} - {{ $tec->especialidad->nombre_especialidad ?? 'General' }}
                                                         </option>
                                                     @endforeach
                                                 </select>
