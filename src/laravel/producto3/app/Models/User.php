@@ -51,4 +51,9 @@ class User extends Authenticatable
     {
         return $this->rol === 'gestora';
     }
+
+    public function perfilTecnico()
+    {
+        return $this->hasOne(Tecnico::class, 'usuario_id');
+    }
 }

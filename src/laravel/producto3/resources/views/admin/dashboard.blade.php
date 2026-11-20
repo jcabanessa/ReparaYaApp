@@ -75,23 +75,31 @@
                                         {{ $inc->estado }}
                                     </span>
                                 </td>
+
+                                {{-- 1. AQUÍ VA LA COLUMNA DE TÉCNICO --}}
                                 <td class="table-subtext">
-                                    {{ $inc->tecnico->nombre ?? 'Sin asignar' }} - {{ $inc->tecnico->especialidad->nombre_especialidad ?? 'General' }}
+                                    {{ $inc->tecnico->nombre ?? 'Sin asignar' }} -
+                                    {{ $inc->tecnico->perfilTecnico->especialidad->nombre_especialidad ?? 'General' }}
                                 </td>
+
                                 <td class="action-cell">
                                     @if(in_array($inc->estado, ['Pendiente', 'Asignada']))
                                         <div class="action-group">
                                             <form action="{{ route('admin.incidencias.asignar', $inc->id) }}" method="POST" class="action-group">
                                                 @csrf
                                                 @method('PUT')
+                                                <input type="hidden" name="incidencia_id" value="{{ $inc->id }}">
+
+                                                {{-- 2. AQUÍ VA EL SELECT DE TÉCNICOS CON SU ESPECIALIDAD --}}
                                                 <select name="tecnico_id" required class="form-control btn-sm">
                                                     <option value="">Técnico...</option>
                                                     @foreach ($tecnicos as $tec)
                                                         <option value="{{ $tec->id }}" {{ $inc->tecnico_id == $tec->id ? 'selected' : '' }}>
-                                                            {{ $tec->nombre }} - {{ $tec->especialidad->nombre_especialidad ?? 'General' }}
+                                                            {{ $tec->nombre }} - {{ $tec->perfilTecnico->especialidad->nombre_especialidad ?? 'General' }}
                                                         </option>
                                                     @endforeach
                                                 </select>
+
                                                 <button type="submit" class="btn-submit btn-sm">Asignar</button>
                                             </form>
 

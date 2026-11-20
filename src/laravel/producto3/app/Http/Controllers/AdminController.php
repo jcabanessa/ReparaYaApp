@@ -21,7 +21,7 @@ class AdminController extends Controller
         $filtroEstado = $request->query('estado');
 
         // Consultar incidencias con relaciones de Eloquent
-        $query = Incidencia::with(['cliente', 'tecnico', 'comunidad', 'especialidad', 'empresaGestora']);
+        $query = Incidencia::with(['cliente', 'tecnico.perfilTecnico.especialidad', 'comunidad', 'especialidad', 'empresaGestora']);
 
         if (!empty($filtroEstado)) {
             $query->where('estado', $filtroEstado);
@@ -30,7 +30,7 @@ class AdminController extends Controller
         $incidencias = $query->orderBy('fecha_servicio', 'desc')->get();
 
         // Obtener la lista de usuarios con rol 'tecnico' para los desplegables de asignación
-        $tecnicos = User::where('rol', 'tecnico')->get();
+        $tecnicos = User::where('rol', 'tecnico')->with('perfilTecnico.especialidad')->get();
 
         return view('admin.dashboard', compact('incidencias', 'tecnicos', 'filtroEstado'));
     }
@@ -38,7 +38,7 @@ class AdminController extends Controller
     // Mostrar calendario con filtrado temporal y relaciones
     public function calendario(Request $request, $filtro = 'todos')
     {
-        $query = Incidencia::with(['cliente', 'tecnico', 'especialidad', 'comunidad']);
+        $query = Incidencia::with(['cliente', 'tecnico.perfilTecnico.especialidad', 'especialidad', 'comunidad']);
 
         switch ($filtro) {
             case 'mensual':
@@ -69,10 +69,21 @@ class AdminController extends Controller
         ]);
 
         $incidencia = Incidencia::findOrFail($request->incidencia_id);
+        $estadoAnterior = $incidencia->estado;
         $incidencia->tecnico_id = $request->tecnico_id;
-        $incidencia->Incidencia::with(['cliente','tecnico.especialidad','especialidad'])->get();
         $incidencia->estado = 'Asignada';
         $incidencia->save();
+
+        if (function_exists('registrarHistorial')) {
+            registrarHistorial(
+                app('db')->getPdo(),
+                $incidencia->id,
+                $estadoAnterior,
+                'Asignada',
+                auth()->id(),
+                "Técnico asignado (ID usuario: {$request->tecnico_id})."
+            );
+        }
 
         return redirect()->route('admin.calendario')->with('success', 'Técnico asignado correctamente.');
     }

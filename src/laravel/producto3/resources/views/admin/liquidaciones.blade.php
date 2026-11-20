@@ -44,7 +44,7 @@
                                             <tr>
                                                 <th>Incidencia</th>
                                                 <th>Fecha Fin</th>
-                                                <th>Comunidad</th>
+                                                <th>Comunidad-Zona</th>
                                                 <th>Servicio</th>
                                                 <th>Precio Base</th>
                                                 <th>Comisión</th>
@@ -55,7 +55,7 @@
                                                 <tr>
                                                     <td class="table-code">{{ $com->incidencia->localizador ?? 'N/A' }}</td>
                                                     <td>{{ $com->updated_at ? $com->updated_at->format('d/m/Y H:i') : 'N/A' }}</td>
-                                                    <td>{{ $com->incidencia->comunidad->nombre ?? 'N/A' }}</td>
+                                                    <td>{{ $com->incidencia->comunidad->nombre ?? 'N/A' }} - <span style="color: #38bdf8;">{{ $com->incidencia->comunidad->zona ?? 'N/A' }}</span></td>
                                                     <td>{{ $com->incidencia->especialidad->nombre_especialidad ?? 'N/A' }}</td>
                                                     <td>{{ number_format($com->incidencia->especialidad->precio_base ?? 0, 2) }} €</td>
                                                     <td><strong style="color: #ff6600;">{{ number_format($com->importe, 2) }} €</strong></td>
