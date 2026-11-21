@@ -5,7 +5,7 @@
     <div class="page-header">
         <div>
             <h1 class="hero-title">Panel de <span>Gestión y Liquidaciones</span></h1>
-            <p class="hero-subtitle">Bienvenida, {{ $gestora->nombre_empresa }} (CIF: {{ $gestora->cif }}).</p>
+            <p class="hero-subtitle">Bienvenida, {{ $gestora->nombre }} (CIF: {{ $gestora->cif }}).</p>
         </div>
         <div style="display: flex; gap: 15px; align-items: center;">
             <span class="badge-status badge-asignada" style="font-size: 1rem; padding: 8px 15px;">
