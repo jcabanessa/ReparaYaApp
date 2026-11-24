@@ -7,6 +7,8 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\GestoraController;
+use App\Http\Controllers\EspecialidadController;
+use App\Http\Controllers\TecnicoController;
 
 /*Route::get('/', function () {
     return response()->json([
@@ -59,6 +61,16 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/gestoras', [AdminController::class, 'gestoras'])->name('admin.gestoras');
     Route::post('/gestoras', [AdminController::class, 'storeGestora'])->name('admin.gestoras.store');
     Route::get('/calendario', [AdminController::class, 'calendario'])->name('admin.calendario');
+   // Aquí añadimos rutas del CRUD Maestro (Técnicos y Especialidades) 
+    Route::resource('especialidades', EspecialidadController::class)
+    ->except(['create','show', 'edit'])
+    ->parameters(['especialidades' => 'especialidad'])
+    ->names('admin.especialidades');
+    Route::resource('tecnicos', TecnicoController::class)
+    ->except(['create','show', 'edit'])
+    ->parameters(['tecnicos' => 'tecnico'])
+    ->names('admin.tecnicos');
+
 });
 
 // 5. Espacios reservados para compañeros (Técnico / Cliente particular)
