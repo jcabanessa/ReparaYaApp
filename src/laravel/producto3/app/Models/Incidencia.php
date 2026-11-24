@@ -51,12 +51,7 @@ class Incidencia extends Model
         return $this->belongsTo(Especialidad::class, 'especialidad_id');
     }
     
-    // Relación: Pertenece a una zona
-    public function zona()
-    {
-        return $this->belongsTo(Zona::class, 'zona_id');
-    }
-
+    
     // Relación: Tiene una comisión asociada (si aplica)
     public function comision()
     {

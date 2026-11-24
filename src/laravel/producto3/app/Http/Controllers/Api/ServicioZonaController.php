@@ -11,10 +11,11 @@ class ServicioZonaController extends Controller
     public function index()
     {
         $resultados = Incidencia::query()
-            ->join('zonas', 'incidencias.zona_id', '=', 'zonas.id')
+            ->join('comunidades', 'incidencias.comunidad_id', '=', 'comunidades.id')
             ->where('incidencias.estado', 'Finalizada')
-            ->select('zonas.nombre as zona', DB::raw('COUNT(incidencias.id) as total_servicios'))
-            ->groupBy('zonas.id', 'zonas.nombre')
+            ->whereNotNull('comunidades.zona')
+            ->select('comunidades.zona as zona', DB::raw('COUNT(incidencias.id) as total_servicios'))
+            ->groupBy('comunidades.zona')
             ->orderByDesc('total_servicios')
             ->get();
 

@@ -13,9 +13,7 @@ class TechController extends Controller
     // Listar incidencias asignadas al técnico autenticado
     public function index()
     {
-        $tecnico = Tecnico::where('usuario_id', auth()->id())->firstOrFail();
-
-        $incidencias = Incidencia::where('tecnico_id', $tecnico->id)
+        $incidencias = Incidencia::where('tecnico_id', auth()->id())
             ->with(['comunidad', 'especialidad', 'cliente'])
             ->orderBy('fecha_servicio', 'asc')
             ->get();
@@ -31,22 +29,19 @@ class TechController extends Controller
             'nuevo_estado'  => 'required|in:En curso,Finalizada',
         ]);
 
-        $tecnico = Tecnico::where('usuario_id', auth()->id())->firstOrFail();
-
         $incidencia = Incidencia::where('id', $request->incidencia_id)
-            ->where('tecnico_id', $tecnico->id)
+            ->where('tecnico_id', auth()->id())
             ->firstOrFail();
 
         DB::transaction(function () use ($incidencia, $request) {
             $incidencia->estado = $request->nuevo_estado;
             $incidencia->save();
 
-            // Punto 6.e: Solo genera comisión en 'laravel_comisiones' cuando pasa a 'Finalizada'
             if ($request->nuevo_estado === 'Finalizada') {
                 Comision::generarParaIncidencia($incidencia);
             }
         });
 
         return redirect()->back()->with('success', 'Estado actualizado correctamente.');
-    }
+}
 }

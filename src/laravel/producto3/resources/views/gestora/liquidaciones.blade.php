@@ -6,7 +6,7 @@
         <div>
             <h1 class="hero-title">Liquidaciones y <span>Comisiones B2B</span></h1>
             <p class="hero-subtitle">
-                Empresa Gestora: <strong>{{ $gestora->nombre_empresa ?? 'Gestora' }}</strong> ·
+                Empresa Gestora: <strong>{{ $gestora->nombre ?? 'Gestora' }}</strong> ·
                 Porcentaje asignado: <span style="color: #ff6600; font-weight: bold;">{{ number_format($gestora->porcentaje_comision, 2) }}%</span>
             </p>
         </div>

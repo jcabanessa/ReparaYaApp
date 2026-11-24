@@ -21,6 +21,8 @@ class AdminController extends Controller
         return view('admin.dashboard', compact('totalIncidencias', 'totalTecnicos'));
     }
 
+    public function dashboard() { return $this->index(); }
+
     // Mostrar calendario con filtrado temporal y relaciones
     public function calendario(Request $request)
     {
@@ -64,15 +66,17 @@ class AdminController extends Controller
     // Mostrar vista de gestión y listado de empresas gestoras
     public function gestoras()
     {
-        $empresas = EmpresaGestora::with('usuario')->orderBy('nombre_empresa', 'asc')->get();
+        $empresas = EmpresaGestora::with('usuario')->orderBy('nombre', 'asc')->get();
         return view('admin.empresas_gestoras', compact('empresas'));
     }
+
+    
 
     // Procesar el alta de una nueva empresa gestora y su usuario de acceso
     public function storeGestora(Request $request)
     {
         $request->validate([
-            'nombre_empresa' => ['required', 'string', 'max:150'],
+            'nombre' => ['required', 'string', 'max:150'],
             'cif' => ['required', 'string', 'max:20', 'unique:empresas_gestoras,cif'],
             'porcentaje_comision' => ['required', 'numeric', 'min:0', 'max:100'],
             'nombre_usuario' => ['required', 'string', 'max:255'],
@@ -86,7 +90,7 @@ class AdminController extends Controller
 
             // 1. Crear el usuario de acceso con rol 'gestora'
             $usuario = User::create([
-                'nombre' => $request->nombre_usuario,
+                'nombre' => $request->nombre,
                 'email' => $request->email,
                 'telefono' => $request->telefono,
                 'password' => Hash::make($request->password),
@@ -96,7 +100,7 @@ class AdminController extends Controller
             // 2. Crear la empresa gestora vinculada al usuario y asignar el porcentaje de comisión
             EmpresaGestora::create([
                 'usuario_id' => $usuario->id,
-                'nombre_empresa' => $request->nombre_empresa,
+                'nombre' => $request->nombre,
                 'cif' => $request->cif,
                 'porcentaje_comision' => $request->porcentaje_comision,
             ]);
