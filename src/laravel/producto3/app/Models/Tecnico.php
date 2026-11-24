@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
 /**
  * Modelo Eloquent que representa el perfil operativo de un técnico
  * y lo vincula con su cuenta de usuario y su especialidad asignada.

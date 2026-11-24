@@ -45,6 +45,12 @@ class Incidencia extends Model
         return $this->belongsTo(Comunidad::class, 'comunidad_id');
     }
 
+    // Relación: Pertenece a una especialidad (tipo de servicio y precio base)
+    public function especialidad()
+    {
+        return $this->belongsTo(Especialidad::class, 'especialidad_id');
+    }
+    
     // Relación: Pertenece a una zona
     public function zona()
     {

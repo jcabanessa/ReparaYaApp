@@ -7,8 +7,9 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\RegisterController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\GestoraController;
-use App\Http\Controllers\EspecialidadController;
-use App\Http\Controllers\TecnicoController;
+use App\Http\Controllers\Admin\EspecialidadController;
+use App\Http\Controllers\Admin\TecnicoController;
+use App\Http\Controllers\Api\ServicioZonaController;
 
 /*Route::get('/', function () {
     return response()->json([
@@ -88,4 +89,8 @@ Route::middleware(['auth', 'role:particular'])->group(function () {
 
 Route::middleware(['auth', 'role:gestora'])->prefix('gestora')->group(function () {
     Route::get('/', [GestoraController::class, 'dashboard'])->name('gestora.dashboard');
+    Route::get('/liquidaciones', [GestoraController::class, 'liquidaciones'])->name('gestora.liquidaciones');
 });
+
+// 6. Servicio Web REST (API JSON) - Punto 8
+Route::get('/api/servicios/zonas', [ServicioZonaController::class, 'index'])->name('api.servicios.zonas');

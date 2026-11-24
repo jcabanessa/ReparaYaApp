@@ -7,14 +7,14 @@
             <h1 class="hero-title">Panel de <span>Gestión</span></h1>
             <p class="hero-subtitle">Bienvenida, {{ $gestora->nombre_empresa ?? auth()->user()->nombre }} (CIF: {{ $gestora->cif ?? 'N/A' }}).</p>
         </div>
-        <div>
+        <div style="display: flex; gap: 12px; align-items: center;">
             <span class="badge-status badge-asignada" style="font-size: 1rem; padding: 8px 15px;">
                 Comisión Aplicada: <strong>{{ number_format($gestora->porcentaje_comision ?? 0, 2) }}%</strong>
             </span>
+            <a href="{{ route('gestora.liquidaciones') }}" class="btn-orange">Ver Liquidaciones Mensuales</a>
         </div>
     </div>
 
-    <!-- Resumen de Comisiones -->
     <div class="dashboard-card">
         <h3>Historial de Comisiones e Incidencias Derivadas</h3>
 
@@ -50,4 +50,4 @@
         @endif
     </div>
 </div>
-@endsection
+@endsection  
