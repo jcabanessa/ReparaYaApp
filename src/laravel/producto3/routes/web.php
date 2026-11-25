@@ -61,7 +61,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/gestoras', [AdminController::class, 'gestoras'])->name('admin.gestoras');
     Route::post('/gestoras', [AdminController::class, 'storeGestora'])->name('admin.gestoras.store');
-    Route::get('/calendario', [AdminController::class, 'calendario'])->name('admin.calendario');
+    Route::get('/calendario', [\App\Http\Controllers\CinthiaAdminController::class, 'calendario'])->name('admin.calendario');
    // Aquí añadimos rutas del CRUD Maestro (Técnicos y Especialidades) 
     Route::resource('especialidades', EspecialidadController::class)
     ->except(['create','show', 'edit'])
@@ -82,9 +82,7 @@ Route::middleware(['auth', 'role:tecnico'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:particular'])->group(function () {
-    Route::get('/cliente/avisos', function () {
-        return view('cliente.avisos');
-    })->name('cliente.avisos');
+    Route::get('/cliente/avisos', [\App\Http\Controllers\ClienteController::class, 'index'])->name('cliente.avisos');
 });
 
 Route::middleware(['auth', 'role:gestora'])->prefix('gestora')->group(function () {
@@ -94,3 +92,6 @@ Route::middleware(['auth', 'role:gestora'])->prefix('gestora')->group(function (
 
 // 6. Servicio Web REST (API JSON) - Punto 8
 Route::get('/api/servicios/zonas', [ServicioZonaController::class, 'index'])->name('api.servicios.zonas');
+
+// Aportaciones de Cinthia: rutas adicionales sin sustituir las de otros integrantes.
+require __DIR__.'/cinthia.php';

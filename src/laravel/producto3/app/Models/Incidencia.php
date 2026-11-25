@@ -9,6 +9,10 @@ class Incidencia extends Model
 {
     use HasFactory;
 
+    protected function casts(): array {
+        return ['fecha_servicio'=>'datetime', 'finalizada_at'=>'datetime', 'precio_aplicado'=>'decimal:2'];
+    }
+
     protected $table = 'incidencias';
 
     protected $fillable = [
@@ -25,6 +29,9 @@ class Incidencia extends Model
         'direccion',
         'precio_aplicado',
         'descripcion',
+        'franja_horaria',
+        'telefono_contacto',
+        'finalizada_at',
     ];
 
     // Relación: Pertenece a un cliente (Usuario)
@@ -63,4 +70,7 @@ class Incidencia extends Model
     {
         return $this->belongsTo(EmpresaGestora::class, 'empresa_gestora_id');
     }
+
+    public function tecnico() { return $this->belongsTo(Tecnico::class, 'tecnico_id'); }
+    public function historial() { return $this->hasMany(HistorialEstado::class, 'incidencia_id')->orderBy('created_at')->orderBy('id'); }
 }

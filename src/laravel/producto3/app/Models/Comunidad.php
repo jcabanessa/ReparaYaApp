@@ -17,4 +17,7 @@ class Comunidad extends Model {
     }
 
     
+
+    public function gestora() { return $this->belongsTo(EmpresaGestora::class, 'empresa_gestora_id'); }
+    public function incidencias() { return $this->hasMany(Incidencia::class, 'comunidad_id'); }
 }
