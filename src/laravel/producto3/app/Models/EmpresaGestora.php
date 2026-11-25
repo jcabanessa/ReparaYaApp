@@ -29,4 +29,6 @@ class EmpresaGestora extends Model
     {
         return $this->belongsTo(User::class, 'usuario_id');
     }
+
+    public function comunidades() { return $this->hasMany(Comunidad::class, 'empresa_gestora_id'); }
 }
