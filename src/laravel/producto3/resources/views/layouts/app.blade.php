@@ -25,10 +25,16 @@
                     <li><a href="{{ route('admin.dashboard') }}" class="nav-link">Panel Admin</a></li>
                     <li><a href="{{ route('admin.gestoras') }}" class="nav-link">Empresas Gestoras</a></li>
                     <li><a href="{{ route('admin.calendario') }}" class="nav-link">Calendario</a></li>
+                    <li><a href="{{ route('admin.tecnicos.index') }}" class="nav-link">Técnicos</a></li>
+                    <li><a href="{{ route('admin.especialidades.index') }}" class="nav-link">Especialidades</a></li>
+
                 @elseif(auth()->user()->rol === 'tecnico')
                     <li><a href="#" class="nav-link">Mi Agenda</a></li>
                 @elseif(auth()->user()->rol === 'particular')
                     <li><a href="#" class="nav-link">Mis Avisos</a></li>
+                @elseif(auth()->user()->rol === 'gestora')
+                    <li><a href="{{ route('gestora.dashboard') }}" class="nav-link">Panel Gestora</a></li>
+                    <li><a href="{{ route('gestora.liquidaciones') }}" class="nav-link">Liquidaciones</a></li>
                 @endif
 
                 <li><a href="{{ route('perfil') }}" class="nav-link">Mi Perfil</a></li>
