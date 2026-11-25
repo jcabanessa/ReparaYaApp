@@ -1,29 +1,9 @@
 @extends('layouts.app')
-
-@section('content')
-<div class="home-container">
-    <div class="page-header">
-        <div>
-            <h1 class="hero-title">Panel de <span>Administración</span></h1>
-            <p class="hero-subtitle">Bienvenido al sistema de control de ReparaYa.</p>
-        </div>
-        <div>
-            <a href="{{ route('admin.calendario') }}" class="btn-orange">Ver Calendario de Incidencias</a>
-        </div>
-    </div>
-
-    <div class="dashboard-grid">
-        <div class="dashboard-card">
-            <h3>Resumen del Sistema</h3>
-            <div class="info-row">
-                <span class="info-label">Total de Incidencias</span>
-                <span class="table-code">{{ $totalIncidencias }}</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Técnicos Registrados</span>
-                <span class="table-code">{{ $totalTecnicos }}</span>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
+@section('title','Administración')
+@section('content')<p class="eyebrow">Administración</p><h1>Panel de ReparaYa</h1>
+<div class="grid cols3">@foreach(['Pendiente','Asignada','En curso','Finalizada','Cancelada'] as $estado)
+<div class="card stat"><span>{{ $estado }}</span><b>{{ $resumen[$estado]??0 }}</b></div>@endforeach</div>
+<div class="card"><h2>Herramientas</h2><div class="actions"><a class="btn" href="{{ route('admin.incidencias') }}">Gestionar incidencias</a>
+<a class="btn secondary" href="{{ route('admin.calendario') }}">Calendario</a>
+<a class="btn secondary" href="{{ route('admin.gestoras') }}">Gestoras y comunidades</a>
+<a class="btn secondary" href="{{ route('admin.liquidaciones') }}">Liquidaciones</a></div></div>@endsection

@@ -1,104 +1,29 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
-
 use App\Http\Controllers\Controller;
+use App\Models\{Especialidad,Tecnico,User};
 use Illuminate\Http\Request;
-use App\Models\Tecnico;
-use App\Models\Especialidad;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\QueryException;
-
-class TecnicoController extends Controller
-{
-    public function index()
-    {
-        $tecnicos = Tecnico::with(['especialidad', 'usuario'])
-            ->orderBy('nombre_completo')
-            ->get();
-
-        $especialidades = Especialidad::orderBy('nombre_especialidad')->get();
-
-        return view('admin.tecnicos.index', compact('tecnicos', 'especialidades'));
+use Illuminate\Validation\Rules\Password;
+class TecnicoController extends Controller {
+    public function index(){return view('admin.tecnicos',['tecnicos'=>Tecnico::with(['usuario','especialidad'])->get(),
+        'especialidades'=>Especialidad::all()]);}
+    public function store(Request $r){
+        $v=$r->validate(['nombre_completo'=>'required|string|max:100','email'=>'required|email|unique:usuarios,email',
+            'password'=>['required',Password::min(10)],'especialidad_id'=>'required|exists:especialidades,id']);
+        DB::transaction(function()use($v){$u=User::create(['nombre'=>$v['nombre_completo'],'email'=>$v['email'],
+            'password'=>$v['password'],'rol'=>'tecnico']);
+            Tecnico::create(['usuario_id'=>$u->id,'nombre_completo'=>$v['nombre_completo'],
+                'especialidad_id'=>$v['especialidad_id'],'disponible'=>true]);});
+        return back()->with('success','Técnico creado.');
     }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'nombre_completo' => 'required|string|max:100',
-            'email'           => 'required|email|max:150|unique:usuarios,email',
-            'telefono'        => 'nullable|string|max:20',
-            'password'        => 'required|string|min:6',
-            'especialidad_id' => 'required|exists:especialidades,id',
-            'disponible'      => 'nullable|boolean',
-        ]);
-
-        try {
-            DB::transaction(function () use ($validated, $request) {
-                $usuario = User::create([
-                    'nombre'   => $validated['nombre_completo'],
-                    'email'    => $validated['email'],
-                    'telefono' => $validated['telefono'] ?? null,
-                    'password' => $validated['password'],
-                    'rol'      => 'tecnico',
-                ]);
-
-                Tecnico::create([
-                    'usuario_id'      => $usuario->id,
-                    'nombre_completo' => $validated['nombre_completo'],
-                    'especialidad_id' => $validated['especialidad_id'],
-                    'disponible'      => $request->has('disponible') ? 1 : 0,
-                ]);
-            });
-
-            return redirect()->route('admin.tecnicos.index')
-                ->with('success', 'Técnico y cuenta de acceso creados correctamente.');
-        } catch (\Exception $e) {
-            return redirect()->route('admin.tecnicos.index')
-                ->with('error', 'Error al registrar el técnico: ' . $e->getMessage());
-        }
+    public function update(Request $r,Tecnico $tecnico){
+        $v=$r->validate(['nombre_completo'=>'required|string|max:100','especialidad_id'=>'required|exists:especialidades,id',
+            'disponible'=>'required|boolean']);$tecnico->update($v);return back()->with('success','Técnico actualizado.');
     }
-
-    public function update(Request $request, Tecnico $tecnico)
-    {
-        $validated = $request->validate([
-            'nombre_completo' => 'required|string|max:100',
-            'especialidad_id' => 'required|exists:especialidades,id',
-            'disponible'      => 'required|in:0,1',
-        ]);
-
-        $tecnico->update([
-            'nombre_completo' => $validated['nombre_completo'],
-            'especialidad_id' => $validated['especialidad_id'],
-            'disponible'      => (int) $validated['disponible'],
-        ]);
-
-        if ($tecnico->usuario) {
-            $tecnico->usuario->update(['nombre' => $validated['nombre_completo']]);
-        }
-
-        return redirect()->route('admin.tecnicos.index')
-            ->with('success', 'Datos del técnico actualizados.');
-    }
-
-    public function destroy(Tecnico $tecnico)
-    {
-        try {
-            DB::transaction(function () use ($tecnico) {
-                $usuario = $tecnico->usuario;
-                $tecnico->delete();
-
-                if ($usuario) {
-                    $usuario->delete();
-                }
-            });
-
-            return redirect()->route('admin.tecnicos.index')
-                ->with('success', 'Técnico eliminado correctamente.');
-        } catch (QueryException $e) {
-            return redirect()->route('admin.tecnicos.index')
-                ->with('error', 'No se puede eliminar este técnico porque tiene incidencias históricas asignadas. Márcalo como No disponible.');
-        }
+    public function destroy(Tecnico $tecnico){
+        if($tecnico->incidencias()->exists())return back()->withErrors(['tecnico'=>'No se puede eliminar un técnico con historial de incidencias.']);
+        DB::transaction(function()use($tecnico){$usuario=$tecnico->usuario;$tecnico->delete();$usuario?->delete();});
+        return back()->with('success','Técnico eliminado.');
     }
 }

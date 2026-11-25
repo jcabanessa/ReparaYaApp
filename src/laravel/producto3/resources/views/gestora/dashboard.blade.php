@@ -1,53 +1,12 @@
 @extends('layouts.app')
-
-@section('content')
-<div class="home-container">
-    <div class="page-header">
-        <div>
-            <h1 class="hero-title">Panel de <span>Gestión</span></h1>
-            <p class="hero-subtitle">Bienvenida, {{ $gestora->nombre ?? auth()->user()->nombre }} (CIF: {{ $gestora->cif ?? 'N/A' }}).</p>
-        </div>
-        <div style="display: flex; gap: 12px; align-items: center;">
-            <span class="badge-status badge-asignada" style="font-size: 1rem; padding: 8px 15px;">
-                Comisión Aplicada: <strong>{{ number_format($gestora->porcentaje_comision ?? 0, 2) }}%</strong>
-            </span>
-            <a href="{{ route('gestora.liquidaciones') }}" class="btn-orange">Ver Liquidaciones Mensuales</a>
-        </div>
-    </div>
-
-    <div class="dashboard-card">
-        <h3>Historial de Comisiones e Incidencias Derivadas</h3>
-
-        @if(!$gestora || $gestora->comisiones->isEmpty())
-            <p class="text-empty" style="margin-top: 15px;">No hay comisiones registradas para esta empresa gestora todavía.</p>
-        @else
-            <div class="table-responsive" style="margin-top: 20px;">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Localizador Incidencia</th>
-                            <th>Fecha Servicio</th>
-                            <th>Importe Comisión</th>
-                            <th>Estado Comisión</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($gestora->comisiones as $comision)
-                            <tr>
-                                <td class="table-code">{{ $comision->incidencia->localizador ?? 'N/A' }}</td>
-                                <td class="table-date">{{ $comision->incidencia ? date('d/m/Y H:i', strtotime($comision->incidencia->fecha_servicio)) : 'N/A' }}</td>
-                                <td><strong style="color: #ff6600;">{{ number_format($comision->importe, 2) }} €</strong></td>
-                                <td>
-                                    <span class="badge-status {{ $comision->estado === 'Pagada' ? 'badge-finalizada' : 'badge-pendiente' }}">
-                                        {{ $comision->estado }}
-                                    </span>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
-</div>
-@endsection  
+@section('title','Panel de gestora')
+@section('content')<p class="eyebrow">Empresas administradoras de fincas</p><div class="heading"><div><h1>{{ $gestora->nombre }}</h1>
+<p class="muted">Comisión acordada: {{ $gestora->porcentaje_comision }} %</p></div>
+<div class="actions"><a class="btn" href="{{ route('gestora.crear') }}">Nueva asistencia</a><a class="btn secondary" href="{{ route('gestora.liquidaciones') }}">Liquidaciones</a></div></div>
+<div class="card"><h2>Mis comunidades</h2><div class="grid cols3">@foreach($gestora->comunidades as $c)<div class="mini-card"><b>{{ $c->nombre }}</b>
+<p>{{ $c->direccion }}</p><span class="chip">{{ $c->zona }}</span></div>@endforeach</div></div>
+<div class="card table-scroll"><h2>Incidencias de mis comunidades</h2><table><thead><tr><th>Localizador</th><th>Comunidad</th><th>Servicio</th><th>Fecha</th><th>Estado</th><th></th></tr></thead><tbody>
+@forelse($avisos as $i)<tr><td>{{ $i->localizador }}</td><td>{{ $i->comunidad?->nombre }}</td>
+<td>{{ $i->especialidad?->nombre_especialidad }}</td><td>{{ $i->fecha_servicio?->format('d/m/Y H:i') }}</td>
+<td><span class="chip">{{ $i->estado }}</span></td><td><a href="{{ route('gestora.ver',$i) }}">Detalle</a></td></tr>
+@empty<tr><td colspan="6">No existen incidencias de esta gestora.</td></tr>@endforelse</tbody></table></div>@endsection

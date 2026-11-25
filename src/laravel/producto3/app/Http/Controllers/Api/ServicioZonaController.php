@@ -1,47 +1,23 @@
 <?php
-
 namespace App\Http\Controllers\Api;
-
 use App\Http\Controllers\Controller;
-use App\Models\Incidencia;
 use Illuminate\Support\Facades\DB;
-
-class ServicioZonaController extends Controller
-{
-    public function index()
-    {
-        $resultados = Incidencia::query()
-            ->join('comunidades', 'incidencias.comunidad_id', '=', 'comunidades.id')
-            ->where('incidencias.estado', 'Finalizada')
-            ->whereNotNull('comunidades.zona')
-            ->select('comunidades.zona as zona', DB::raw('COUNT(incidencias.id) as total_servicios'))
-            ->groupBy('comunidades.zona')
-            ->orderByDesc('total_servicios')
-            ->get();
-
-        $totalGlobal = (int) $resultados->sum('total_servicios');
-
-        if ($totalGlobal === 0) {
-            return response()->json([
-                'total_finalizados' => 0,
-                'zonas'             => [],
-            ]);
+class ServicioZonaController extends Controller {
+    public function index(){
+        // Incluye 'Sin zona' para incidencias particulares; la suma de porcentajes es 100 %.
+        $rows=DB::table('incidencias as i')->leftJoin('comunidades as c','c.id','=','i.comunidad_id')
+            ->where('i.estado','Finalizada')
+            ->selectRaw("COALESCE(NULLIF(c.zona, ''), 'Sin zona') as zona, COUNT(*) as n")
+            ->groupByRaw("COALESCE(NULLIF(c.zona, ''), 'Sin zona')")
+            ->orderBy('zona')->get();
+        $total=(int)$rows->sum('n');
+        if($total===0)return response()->json(['data'=>[],'total_servicios_realizados'=>0]);
+        $porcentajes=[];$acumulado=0;
+        foreach($rows as $i=>$row){
+            $p=($i===$rows->count()-1)?round(100-$acumulado,2):round(100*(int)$row->n/$total,2);
+            $acumulado+=$p;
+            $porcentajes[]=['zona'=>$row->zona,'servicios_realizados'=>(int)$row->n,'porcentaje_total'=>$p];
         }
-
-        $zonas = $resultados->map(function ($item) use ($totalGlobal) {
-            $cantidad = (int) $item->total_servicios;
-            $porcentaje = round(($cantidad * 100) / $totalGlobal, 2);
-
-            return [
-                'zona'                  => $item->zona,
-                'servicios_finalizados' => $cantidad,
-                'porcentaje'            => $porcentaje,
-            ];
-        })->values();
-
-        return response()->json([
-            'total_finalizados' => $totalGlobal,
-            'zonas'             => $zonas,
-        ]);
+        return response()->json(['data'=>$porcentajes,'total_servicios_realizados'=>$total]);
     }
 }
