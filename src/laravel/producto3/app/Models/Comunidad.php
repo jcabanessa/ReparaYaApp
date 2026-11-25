@@ -8,7 +8,8 @@ class Comunidad extends Model {
     protected $fillable = [
         'nombre', 
         'direccion',
-        'empresa_gestora_id',];
+        'empresa_gestora_id',
+        'zona'];
 
     // Relación: Una comunidad pertenece a una empresa gestora
     public function empresaGestora() {
