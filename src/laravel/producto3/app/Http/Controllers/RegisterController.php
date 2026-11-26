@@ -33,6 +33,6 @@ class RegisterController extends Controller
 
         Auth::login($user);
 
-        return redirect()->route('cliente.dashboard');
+        return redirect()->route('cliente.avisos')->with('success', 'Registro exitoso. ¡Bienvenido!');
     }
 }
