@@ -16,23 +16,65 @@ use App\Models\Especialidad;
 class AdminController extends Controller
 {
     // Panel principal de administración
-    public function dashboard(Request $request)
+        public function dashboard(Request $request)
     {
         $filtroEstado = $request->query('estado');
+        $filtroUrgencia = $request->query('urgencia'); // 'urgente' | 'estandar'
+        $filtroAsignacion = $request->query('asignacion'); // 'sin-asignar' | 'asignado'
+        $buscar = trim((string) $request->query('buscar', ''));
 
-        // Consultar incidencias con relaciones de Eloquent
-        $query = Incidencia::with(['cliente', 'tecnico.perfilTecnico.especialidad', 'comunidad', 'especialidad', 'empresaGestora']);
+        $query = Incidencia::with([
+            'cliente',
+            'tecnico.perfilTecnico.especialidad',
+            'comunidad',
+            'especialidad',
+            'empresaGestora',
+        ]);
 
         if (!empty($filtroEstado)) {
             $query->where('estado', $filtroEstado);
         }
 
+        if ($filtroUrgencia === 'urgente') {
+            $query->whereRaw('LOWER(tipo_urgencia) = ?', ['urgente']);
+        } elseif ($filtroUrgencia === 'estandar') {
+            $query->whereRaw('LOWER(tipo_urgencia) != ?', ['urgente']);
+        }
+
+        if ($filtroAsignacion === 'sin-asignar') {
+            $query->whereNull('tecnico_id');
+        } elseif ($filtroAsignacion === 'asignado') {
+            $query->whereNotNull('tecnico_id');
+        }
+
+        if ($buscar !== '') {
+            $like = '%' . $buscar . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('localizador', 'like', $like)
+                ->orWhere('direccion', 'like', $like)
+                ->orWhereHas('especialidad', function ($sub) use ($like) {
+                    $sub->where('nombre_especialidad', 'like', $like);
+                })
+                ->orWhereHas('tecnico', function ($sub) use ($like) {
+                    $sub->where('nombre', 'like', $like);
+                });
+            });
+        }
+
         $incidencias = $query->orderBy('fecha_servicio', 'desc')->get();
 
-        // Obtener la lista de usuarios con rol 'tecnico' para los desplegables de asignación
-        $tecnicos = User::where('rol', 'tecnico')->with('perfilTecnico.especialidad')->get();
+        $tecnicos = User::where('rol', 'tecnico')
+            ->with('perfilTecnico.especialidad')
+            ->get();
 
-        return view('admin.dashboard', compact('incidencias', 'tecnicos', 'filtroEstado'));
+        return view('admin.dashboard', compact(
+            'incidencias',
+            'tecnicos',
+            'filtroEstado',
+            'filtroUrgencia',
+            'filtroAsignacion',
+            'buscar'
+        ));
     }
 
     // Mostrar calendario con filtrado temporal y relaciones

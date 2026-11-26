@@ -26,11 +26,37 @@
 
     <div class="filter-bar">
         <span class="filter-label">Filtrar por estado:</span>
-        <a href="{{ route('admin.dashboard') }}" class="filter-link {{ empty($filtroEstado) ? 'active' : '' }}">Todos</a>
-        <a href="{{ route('admin.dashboard', ['estado' => 'Pendiente']) }}" class="filter-link {{ $filtroEstado === 'Pendiente' ? 'active' : '' }}">Pendientes</a>
-        <a href="{{ route('admin.dashboard', ['estado' => 'Asignada']) }}" class="filter-link {{ $filtroEstado === 'Asignada' ? 'active' : '' }}">Asignadas</a>
-        <a href="{{ route('admin.dashboard', ['estado' => 'En curso']) }}" class="filter-link {{ $filtroEstado === 'En curso' ? 'active' : '' }}">En curso</a>
-        <a href="{{ route('admin.dashboard', ['estado' => 'Finalizada']) }}" class="filter-link {{ $filtroEstado === 'Finalizada' ? 'active' : '' }}">Finalizadas</a>
+        <a href="{{ route('admin.dashboard', request()->except('estado')) }}" class="filter-link {{ empty($filtroEstado) ? 'active' : '' }}">Todos</a>
+        <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['estado' => 'Pendiente'])) }}" class="filter-link {{ $filtroEstado === 'Pendiente' ? 'active' : '' }}">Pendientes</a>
+        <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['estado' => 'Asignada'])) }}" class="filter-link {{ $filtroEstado === 'Asignada' ? 'active' : '' }}">Asignadas</a>
+        <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['estado' => 'En curso'])) }}" class="filter-link {{ $filtroEstado === 'En curso' ? 'active' : '' }}">En curso</a>
+        <a href="{{ route('admin.dashboard', array_merge(request()->query(), ['estado' => 'Finalizada'])) }}" class="filter-link {{ $filtroEstado === 'Finalizada' ? 'active' : '' }}">Finalizadas</a>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px; background: #111; border: 1px solid #262626; border-radius: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            <span style="color: #9ca3af; font-size: 0.85rem; font-weight: 600;">Urgencia / Asignación:</span>
+            <a href="{{ route('admin.dashboard', request()->except(['urgencia', 'asignacion'])) }}" class="filter-link {{ empty($filtroUrgencia) && empty($filtroAsignacion) ? 'active' : '' }}">Todas</a>
+            <a href="{{ route('admin.dashboard', array_merge(request()->except('asignacion'), ['urgencia' => 'urgente'])) }}" class="filter-link {{ ($filtroUrgencia ?? '') === 'urgente' ? 'active' : '' }}">Urgentes</a>
+            <a href="{{ route('admin.dashboard', array_merge(request()->except('asignacion'), ['urgencia' => 'estandar'])) }}" class="filter-link {{ ($filtroUrgencia ?? '') === 'estandar' ? 'active' : '' }}">Estándar</a>
+            <a href="{{ route('admin.dashboard', array_merge(request()->except('urgencia'), ['asignacion' => 'sin-asignar'])) }}" class="filter-link {{ ($filtroAsignacion ?? '') === 'sin-asignar' ? 'active' : '' }}">Sin técnico</a>
+            <a href="{{ route('admin.dashboard', array_merge(request()->except('urgencia'), ['asignacion' => 'asignado'])) }}" class="filter-link {{ ($filtroAsignacion ?? '') === 'asignado' ? 'active' : '' }}">Asignados</a>
+        </div>
+
+        <form action="{{ route('admin.dashboard') }}" method="GET" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            @if(!empty($filtroEstado))
+                <input type="hidden" name="estado" value="{{ $filtroEstado }}">
+            @endif
+            @if(!empty($filtroUrgencia))
+                <input type="hidden" name="urgencia" value="{{ $filtroUrgencia }}">
+            @endif
+            @if(!empty($filtroAsignacion))
+                <input type="hidden" name="asignacion" value="{{ $filtroAsignacion }}">
+            @endif
+            <input type="text" name="buscar" value="{{ $buscar ?? '' }}" placeholder="Buscar código, servicio, técnico..." class="form-control btn-sm" style="min-width: 220px;">
+            <button type="submit" class="btn-submit btn-sm">Buscar</button>
+            <a href="{{ route('admin.dashboard') }}" class="filter-link">Limpiar</a>
+        </form>
     </div>
 
     <div class="dashboard-card">
@@ -76,7 +102,6 @@
                                     </span>
                                 </td>
 
-                                {{-- 1. AQUÍ VA LA COLUMNA DE TÉCNICO --}}
                                 <td class="table-subtext">
                                     {{ $inc->tecnico->nombre ?? 'Sin asignar' }} -
                                     {{ $inc->tecnico->perfilTecnico->especialidad->nombre_especialidad ?? 'General' }}
@@ -90,7 +115,6 @@
                                                 @method('PUT')
                                                 <input type="hidden" name="incidencia_id" value="{{ $inc->id }}">
 
-                                                {{-- 2. AQUÍ VA EL SELECT DE TÉCNICOS CON SU ESPECIALIDAD --}}
                                                 <select name="tecnico_id" required class="form-control btn-sm">
                                                     <option value="">Técnico...</option>
                                                     @foreach ($tecnicos as $tec)
