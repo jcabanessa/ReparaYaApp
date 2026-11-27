@@ -1,5 +1,7 @@
 @extends('layouts.app')
 @section('content')
+<div class="p3-module home-container">
+
 <h1>Comunidades · Producto 3</h1>
 @if(session('success'))<p>{{ session('success') }}</p>@endif
 @if($errors->any())<ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>@endif
@@ -23,4 +25,6 @@
 <button type="submit">Guardar cambios</button></form><hr>
 @empty<p>Sin comunidades.</p>@endforelse
 </section>
+
+</div>
 @endsection
