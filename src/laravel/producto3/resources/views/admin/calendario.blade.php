@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('title','Calendario de incidencias')
-@section('content')<div class="heading"><div><p class="eyebrow">Administración</p><h1>Calendario de intervenciones</h1><p class="muted">Urgente en rojo; estándar en azul. El estado aparece también por escrito.</p></div></div>
+@section('content')
+<div class="p3-module home-container">
+<div class="heading"><div><p class="eyebrow">Administración</p><h1>Calendario de intervenciones</h1><p class="muted">Urgente en rojo; estándar en azul. El estado aparece también por escrito.</p></div></div>
 <div class="card"><div class="calendar-toolbar"><div class="actions"><button id="prev" class="btn secondary" type="button">Anterior</button><button id="today" class="btn secondary" type="button">Hoy</button><button id="next" class="btn secondary" type="button">Siguiente</button></div>
 <h2 id="current-date"></h2><div class="actions"><button data-mode="month" class="btn" type="button">Mes</button><button data-mode="week" class="btn secondary" type="button">Semana</button><button data-mode="day" class="btn secondary" type="button">Día</button></div></div>
 <div id="calendar" class="calendar-view"></div></div>
@@ -25,4 +27,6 @@ function paint(){const a=document.getElementById('calendar');const date=document
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{modo=b.dataset.mode;paint();}));
 for(const [id,n] of [['prev',-1],['next',1]])document.getElementById(id).onclick=()=>{if(modo==='month')fecha.setMonth(fecha.getMonth()+n);else fecha.setDate(fecha.getDate()+n*(modo==='week'?7:1));paint();};
 document.getElementById('today').onclick=()=>{fecha=new Date();paint();};paint();
-</script>@endsection
+</script>
+</div>
+@endsection

@@ -1,5 +1,7 @@
 @extends('layouts.app')
 @section('content')
+<div class="p3-module home-container">
+
 <h1>Liquidaciones mensuales · Administración</h1>
 <form method="GET" action="{{ route('admin.liquidaciones') }}">
 <label>Empresa gestora<select name="gestora_id"><option value="">Todas</option>
@@ -19,4 +21,6 @@
 <td>{{ $c->empresaGestora?->porcentaje_comision }} %</td><td>{{ number_format((float)$c->importe,2,',','.') }} €</td></tr>
 @empty<tr><td colspan="7">Sin liquidaciones.</td></tr>@endforelse
 </tbody></table><small>Para incidencias antiguas sin fecha explícita de finalización, se utiliza la fecha de la última actualización como referencia. El porcentaje mostrado es el actual de la gestora.</small></section>
+
+</div>
 @endsection

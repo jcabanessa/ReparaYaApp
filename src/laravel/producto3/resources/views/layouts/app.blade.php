@@ -6,6 +6,7 @@
     <title>ReparaYaApp</title>
     <!-- Carga del archivo CSS corporativo mediante la función asset() de Laravel -->
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/cinthia-p3.css') }}">
 </head>
 <body>
 

@@ -61,7 +61,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/gestoras', [AdminController::class, 'gestoras'])->name('admin.gestoras');
     Route::post('/gestoras', [AdminController::class, 'storeGestora'])->name('admin.gestoras.store');
-    Route::get('/calendario', [\App\Http\Controllers\CinthiaAdminController::class, 'calendario'])->name('admin.calendario');
+    Route::get('/calendario', [\App\Http\Controllers\AdminController::class, 'calendario'])->name('admin.calendario');
    // Aquí añadimos rutas del CRUD Maestro (Técnicos y Especialidades) 
     Route::resource('especialidades', EspecialidadController::class)
     ->except(['create','show', 'edit'])
@@ -93,5 +93,24 @@ Route::middleware(['auth', 'role:gestora'])->prefix('gestora')->group(function (
 // 6. Servicio Web REST (API JSON) - Punto 8
 Route::get('/api/servicios/zonas', [ServicioZonaController::class, 'index'])->name('api.servicios.zonas');
 
-// Aportaciones de Cinthia: rutas adicionales sin sustituir las de otros integrantes.
-require __DIR__.'/cinthia.php';
+// Incidencias de clientes y funciones de administración del Producto 3.
+Route::middleware(['auth','role:particular'])->prefix('cliente')->name('cliente.')->group(function () {
+    Route::get('/nueva',[\App\Http\Controllers\ClienteController::class,'crear'])->name('crear');
+    Route::post('/nueva',[\App\Http\Controllers\ClienteController::class,'store'])->name('store');
+    Route::get('/avisos/{incidencia}',[\App\Http\Controllers\ClienteController::class,'show'])->name('ver');
+    Route::post('/avisos/{incidencia}/cancelar',[\App\Http\Controllers\ClienteController::class,'cancelar'])->name('cancelar');
+});
+Route::middleware(['auth','role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/incidencias',[AdminController::class,'incidencias'])->name('incidencias');
+    Route::get('/incidencias/nueva',[AdminController::class,'nueva'])->name('nueva');
+    Route::post('/incidencias/nueva',[AdminController::class,'guardar'])->name('guardar');
+    Route::get('/incidencias/{incidencia}',[AdminController::class,'ver'])->name('ver');
+    Route::get('/incidencias/{incidencia}/editar',[AdminController::class,'editar'])->name('editar');
+    Route::put('/incidencias/{incidencia}',[AdminController::class,'actualizar'])->name('actualizar');
+    Route::post('/incidencias/{incidencia}/asignar',[AdminController::class,'asignar'])->name('asignar');
+    Route::post('/incidencias/{incidencia}/cancelar',[AdminController::class,'cancelar'])->name('cancelar');
+    Route::get('/comunidades',[AdminController::class,'comunidades'])->name('comunidades');
+    Route::post('/comunidades',[AdminController::class,'storeComunidad'])->name('comunidades.store');
+    Route::put('/comunidades/{comunidad}',[AdminController::class,'actualizarComunidad'])->name('comunidades.update');
+    Route::get('/liquidaciones',[AdminController::class,'liquidaciones'])->name('liquidaciones');
+});
