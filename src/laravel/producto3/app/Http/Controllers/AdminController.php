@@ -28,8 +28,6 @@ class AdminController extends Controller
     public function dashboard() { return $this->index(); }
 
     // Mostrar calendario con filtrado temporal y relaciones
-    
-
     // Asignar un técnico a una incidencia
     public function asignarTecnico(Request $request)
     {
