@@ -21,12 +21,14 @@ class RegisterController extends Controller
         $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:usuarios'],
+            'telefono' => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
         $user = User::create([
             'nombre' => $request->nombre,
             'email' => $request->email,
+            'telefono' => $request->telefono,
             'password' => Hash::make($request->password),
             'rol' => 'particular', // Por defecto se registran como clientes
         ]);

@@ -28,6 +28,10 @@
                 <label for="email" class="form-label">Correo Electrónico</label>
                 <input type="email" id="email" name="email" value="{{ old('email') }}" required class="form-control" placeholder="tu@correo.com">
             </div>
+            <div class="form-group">
+                <label for="telefono" class="form-label">Teléfono</label>
+                <input type="text" id="telefono" name="telefono" value="{{ old('telefono') }}" required class="form-control" placeholder="Tu número de teléfono">
+            </div>
 
             <div class="form-group">
                 <label for="password" class="form-label">Contraseña</label>

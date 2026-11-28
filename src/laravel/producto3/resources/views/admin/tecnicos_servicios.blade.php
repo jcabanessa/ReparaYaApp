@@ -26,6 +26,9 @@
                     <input type="email" name="email" placeholder="Correo electrónico" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
                 </div>
                 <div class="form-group">
+                    <input type="text" name="telefono" placeholder="Teléfono" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
+                </div>
+                <div class="form-group">
                     <input type="password" name="password" placeholder="Contraseña de acceso" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
                 </div>
                 <div class="form-group">
@@ -83,7 +86,7 @@
             <form action="{{ route('admin.especialidades.store') }}" method="POST" style="margin-top: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #2a2a2a;">
                 @csrf
                 <div class="form-group">
-                    <input type="text" name="nombre" placeholder="Ej: Fontanería, Electricidad..." required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
+                    <input type="text" name="nombre_especialidad" placeholder="Ej: Fontanería, Electricidad..." required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">
                 </div>
                 <div class="form-group">
                     <input type="number" step="0.01" name="precio_base" placeholder="Precio Base (€) Ej: 50.00" required style="width: 100%; padding: 8px; margin-bottom: 10px; background: #0b0b0b; border: 1px solid #2a2a2a; color: #fff; border-radius: 4px;">

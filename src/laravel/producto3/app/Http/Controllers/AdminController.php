@@ -184,12 +184,12 @@ class AdminController extends Controller
     public function storeEspecialidad(Request $request)
     {
         $request->validate([
-            'nombre' => ['required', 'string', 'max:100'],
+            'nombre_especialidad' => ['required', 'string', 'max:100'],
             'precio_base' => ['required', 'numeric', 'min:0'],
         ]);
 
         Especialidad::create([
-            'nombre_especialidad' => $request->nombre,
+            'nombre_especialidad' => $request->nombre_especialidad,
             'precio_base' => $request->precio_base,
         ]);
 

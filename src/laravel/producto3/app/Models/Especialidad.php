@@ -9,7 +9,7 @@ class Especialidad extends Model
     protected $table = 'especialidades';
     public $timestamps = false;
 
-    protected $fillable = ['nombre', 'precio_base'];
+    protected $fillable = ['nombre_especialidad', 'precio_base'];
 
     protected $casts = [
         'precio_base' => 'decimal:2',
