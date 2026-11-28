@@ -53,8 +53,32 @@
     <!-- Incidencias Registradas -->
     <div class="dashboard-card" style="margin-bottom: 30px;">
         <h3>Incidencias de Tus Comunidades</h3>
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 15px; padding: 12px; background: #111; border: 1px solid #262626; border-radius: 8px;">
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <a href="{{ route('gestora.dashboard', request()->except(['estado', 'urgencia'])) }}" class="filter-link {{ empty($estado) && empty($urgencia) ? 'active' : '' }}">Todas</a>
+                <a href="{{ route('gestora.dashboard', array_merge(request()->except('urgencia'), ['estado' => 'Pendiente'])) }}" class="filter-link {{ ($estado ?? '') === 'Pendiente' ? 'active' : '' }}">Pendientes</a>
+                <a href="{{ route('gestora.dashboard', array_merge(request()->except('urgencia'), ['estado' => 'Asignada'])) }}" class="filter-link {{ ($estado ?? '') === 'Asignada' ? 'active' : '' }}">Asignadas</a>
+                <a href="{{ route('gestora.dashboard', array_merge(request()->except('urgencia'), ['estado' => 'En curso'])) }}" class="filter-link {{ ($estado ?? '') === 'En curso' ? 'active' : '' }}">En curso</a>
+                <a href="{{ route('gestora.dashboard', array_merge(request()->except('urgencia'), ['estado' => 'Finalizada'])) }}" class="filter-link {{ ($estado ?? '') === 'Finalizada' ? 'active' : '' }}">Finalizadas</a>
+                <a href="{{ route('gestora.dashboard', array_merge(request()->except('estado'), ['urgencia' => 'urgente'])) }}" class="filter-link {{ ($urgencia ?? '') === 'urgente' ? 'active' : '' }}">Urgentes</a>
+            </div>
+
+            <form action="{{ route('gestora.dashboard') }}" method="GET" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                @if(!empty($estado))
+                    <input type="hidden" name="estado" value="{{ $estado }}">
+                @endif
+                @if(!empty($urgencia))
+                    <input type="hidden" name="urgencia" value="{{ $urgencia }}">
+                @endif
+                <input type="text" name="buscar" value="{{ $buscar ?? '' }}" placeholder="Buscar código, comunidad, zona..." class="form-control btn-sm" style="min-width: 210px;">
+                <button type="submit" class="btn-submit btn-sm">Buscar</button>
+                <a href="{{ route('gestora.dashboard') }}" class="filter-link">Limpiar</a>
+            </form>
+        </div>
+
         @if($incidencias->isEmpty())
-            <p class="text-empty" style="margin-top: 15px;">No hay incidencias registradas todavía.</p>
+            <p class="text-empty" style="margin-top: 15px;">No hay incidencias registradas con este filtro.</p>
         @else
             <div class="table-responsive" style="margin-top: 15px;">
                 <table class="admin-table">
@@ -72,7 +96,7 @@
                             <tr>
                                 <td class="table-code">{{ $inc->localizador }}</td>
                                 <td>
-                                    {{ $inc->comunidad->nombre ?? 'N/A' }} 
+                                    {{ $inc->comunidad->nombre ?? 'N/A' }}
                                     @if($inc->comunidad?->zona)
                                         <small style="color: #38bdf8;">({{ $inc->comunidad->zona }})</small>
                                     @endif

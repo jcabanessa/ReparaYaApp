@@ -10,16 +10,47 @@ use App\Models\EmpresaGestora;
 class TechController extends Controller
 {
     // Listar incidencias asignadas al técnico autenticado
-    public function index()
+                public function index(Request $request)
     {
         $tecnicoId = auth()->id();
-        
-        $incidencias = Incidencia::where('tecnico_id', $tecnicoId)
-            ->with(['comunidad', 'cliente'])
-            ->orderBy('fecha_servicio', 'asc')
-            ->get();
 
-        return view('tecnico.dashboard', compact('incidencias'));
+        $estado = trim((string) $request->query('estado', ''));
+        $urgencia = strtolower(trim((string) $request->query('urgencia', '')));
+        $buscar = trim((string) $request->query('buscar', ''));
+
+        $query = Incidencia::where('tecnico_id', $tecnicoId)
+            ->with(['comunidad', 'cliente', 'especialidad']);
+
+        if ($estado !== '') {
+            $query->where('estado', $estado);
+        }
+
+        if ($urgencia === 'urgente') {
+            $query->where('tipo_urgencia', 'Urgente');
+        } elseif ($urgencia === 'estandar') {
+            $query->whereIn('tipo_urgencia', ['Estándar', 'Estandar']);
+        }
+
+        if ($buscar !== '') {
+            $like = '%' . $buscar . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('localizador', 'like', $like)
+                    ->orWhere('direccion', 'like', $like)
+                    ->orWhere('estado', 'like', $like)
+                    ->orWhere('tipo_urgencia', 'like', $like)
+                    ->orWhereHas('comunidad', function ($sub) use ($like) {
+                        $sub->where('nombre', 'like', $like)
+                            ->orWhere('zona', 'like', $like);
+                    })
+                    ->orWhereHas('especialidad', function ($sub) use ($like) {
+                        $sub->where('nombre_especialidad', 'like', $like);
+                    });
+            });
+        }
+
+        $incidencias = $query->orderBy('fecha_servicio', 'asc')->get();
+
+        return view('tecnico.agenda', compact('incidencias', 'estado', 'urgencia', 'buscar'));
     }
 
     // Cambiar el estado de una incidencia

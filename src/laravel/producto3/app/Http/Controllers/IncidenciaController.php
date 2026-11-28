@@ -210,9 +210,9 @@ class IncidenciaController extends Controller
     }
 
     // Agenda de trabajo para el técnico
-    public function agendaTecnico()
+    /*public function agendaTecnico()
     {
         $incidencias = Incidencia::where('tecnico_id', auth()->id())->orderBy('fecha_servicio', 'asc')->get();
         return view('tecnico.agenda', compact('incidencias'));
-    }
+    }*/
 }

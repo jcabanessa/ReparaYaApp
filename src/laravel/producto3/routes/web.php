@@ -80,12 +80,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/especialidades', [AdminController::class, 'storeEspecialidad'])->name('admin.especialidades.store');
 });
 
-// 5. Espacios reservados para compañeros (Técnico / Cliente particular)
-Route::middleware(['auth', 'role:tecnico'])->group(function () {
-    Route::get('/tecnico/agenda', function () {
-        return view('tecnico.agenda');
-    })->name('tecnico.agenda');
-    Route::get('/tecnico/calendario/{filtro?}', [TechController::class, 'calendario'])->name('tecnico.calendario');
+// 5. Rutas protegidas de Técnico
+Route::middleware(['auth', 'role:tecnico'])->prefix('tecnico')->group(function () {
+    Route::get('/agenda', [TechController::class, 'index'])->name('tecnico.agenda');
+    Route::get('/calendario/{filtro?}', [TechController::class, 'calendario'])
+        ->name('tecnico.calendario')
+        ->defaults('filtro', 'todos');
 });
 
 Route::middleware(['auth', 'role:particular'])->group(function () {
@@ -108,7 +108,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/cliente/avisos', [IncidenciaController::class, 'misAvisos'])->name('cliente.avisos');
 
     // Panel de técnico y actualización de estados
-    Route::get('/tecnico/agenda', [IncidenciaController::class, 'agendaTecnico'])->name('tecnico.agenda');
+    //Route::get('/tecnico/agenda', [IncidenciaController::class, 'agendaTecnico'])->name('tecnico.agenda');
     Route::put('/incidencias/{id}/estado', [IncidenciaController::class, 'actualizarEstado'])->name('incidencias.estado');
     
     // Asignación de técnico desde administración

@@ -1,6 +1,34 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $estadoActual = $estado ?? '';
+    $urgenciaActual = $urgencia ?? '';
+    $buscarActual = $buscar ?? '';
+
+    $buildUrl = function (array $overrides = [], array $remove = []) use ($estadoActual, $urgenciaActual, $buscarActual) {
+        $params = array_filter([
+            'estado'   => $estadoActual,
+            'urgencia' => $urgenciaActual,
+            'buscar'   => $buscarActual,
+        ], fn($v) => $v !== '' && $v !== null);
+
+        foreach ($remove as $key) {
+            unset($params[$key]);
+        }
+
+        foreach ($overrides as $key => $val) {
+            if ($val === '' || $val === null) {
+                unset($params[$key]);
+            } else {
+                $params[$key] = $val;
+            }
+        }
+
+        return route('tecnico.agenda', $params);
+    };
+@endphp
+
 <div class="home-container">
     <div class="page-header">
         <div>
@@ -15,10 +43,33 @@
         </div>
     @endif
 
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; padding: 12px; background: #111; border: 1px solid #262626; border-radius: 8px;">
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            <a href="{{ route('tecnico.agenda') }}" class="filter-link {{ $estadoActual === '' && $urgenciaActual === '' && $buscarActual === '' ? 'active' : '' }}">Todos</a>
+            <a href="{{ $buildUrl(['estado' => 'Asignada']) }}" class="filter-link {{ strcasecmp($estadoActual, 'Asignada') === 0 ? 'active' : '' }}">Asignadas</a>
+            <a href="{{ $buildUrl(['estado' => 'En curso']) }}" class="filter-link {{ strcasecmp($estadoActual, 'En curso') === 0 ? 'active' : '' }}">En curso</a>
+            <a href="{{ $buildUrl(['estado' => 'Finalizada']) }}" class="filter-link {{ strcasecmp($estadoActual, 'Finalizada') === 0 ? 'active' : '' }}">Finalizadas</a>
+            <a href="{{ $buildUrl(['urgencia' => 'urgente']) }}" class="filter-link {{ $urgenciaActual === 'urgente' ? 'active' : '' }}">Urgentes</a>
+            <a href="{{ $buildUrl(['urgencia' => 'estandar']) }}" class="filter-link {{ $urgenciaActual === 'estandar' ? 'active' : '' }}">Estándar</a>
+        </div>
+
+        <form action="{{ route('tecnico.agenda') }}" method="GET" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            @if($estadoActual !== '')
+                <input type="hidden" name="estado" value="{{ $estadoActual }}">
+            @endif
+            @if($urgenciaActual !== '')
+                <input type="hidden" name="urgencia" value="{{ $urgenciaActual }}">
+            @endif
+            <input type="text" name="buscar" value="{{ $buscarActual }}" placeholder="Buscar código, dirección o servicio..." class="form-control btn-sm" style="min-width: 210px;">
+            <button type="submit" class="btn-submit btn-sm">Buscar</button>
+            <a href="{{ route('tecnico.agenda') }}" class="filter-link">Limpiar</a>
+        </form>
+    </div>
+
     <div class="dashboard-card">
         <h3>Incidencias Asignadas</h3>
         @if($incidencias->isEmpty())
-            <p class="text-empty" style="margin-top: 15px;">No tienes incidencias asignadas en este momento.</p>
+            <p class="text-empty" style="margin-top: 15px;">No tienes incidencias asignadas con este filtro.</p>
         @else
             <div class="table-responsive" style="margin-top: 20px;">
                 <table class="admin-table">
